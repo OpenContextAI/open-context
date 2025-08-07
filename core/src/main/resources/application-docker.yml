@@ -1,0 +1,78 @@
+spring:
+  application:
+    name: open-context-core
+  
+  # Database Configuration (Docker)
+  datasource:
+    url: jdbc:postgresql://postgres:5432/opencontext
+    username: user
+    password: password
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  # Servlet Configuration
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+  # Elasticsearch Configuration (Docker)
+  elasticsearch:
+    uris: http://elasticsearch:9200
+
+# Ollama Configuration (Docker)
+ollama:
+  base-url: http://ollama:11434
+  model: dengcao/Qwen3-Embedding-0.6B:F16
+
+# MinIO Configuration (Docker)
+minio:
+  endpoint: http://minio:9000
+  access-key: minioadmin
+  secret-key: minioadmin123!
+  bucket-name: opencontext-documents
+
+# Unstructured.io Configuration (Docker)
+unstructured:
+  base-url: http://unstructured-api:8000
+
+# Application Configuration
+opencontext:
+  api:
+    key: dev-api-key-123
+  processing:
+    chunk-size: 1000
+    chunk-overlap: 200
+
+# Management Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+# Logging Configuration
+logging:
+  level:
+    com.opencontext: DEBUG
+    org.springframework.data.elasticsearch: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+server:
+  port: 8080
