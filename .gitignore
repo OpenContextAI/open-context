@@ -1,0 +1,38 @@
+# Docker volumes data
+postgres_data/
+es_data/
+ollama_data/
+minio_data/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+*.env
+
+# Mac
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Logs
+*.log
+
+# Memory bank (sensitive project information)
+memory-bank/
+
+# TaskMaster files (project management)
+.taskmaster/
+
+# IDE
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*~
