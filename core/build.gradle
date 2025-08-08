@@ -93,7 +93,7 @@ tasks.named('test') {
 }
 
 // QueryDSL Configuration
-def querydslDir = "$buildDir/generated/querydsl"
+def querydslDir = layout.buildDirectory.dir("generated/querydsl").get().asFile
 
 querydsl {
     jpa = true
