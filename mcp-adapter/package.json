@@ -1,0 +1,20 @@
+{
+  "name": "mcp-adapter",
+  "version": "1.0.0",
+  "description": "OpenContext MCP Adapter",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "keywords": ["mcp", "adapter"],
+  "author": "OpenContext Team",
+  "license": "MIT",
+  "dependencies": {},
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
