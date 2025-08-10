@@ -2,7 +2,6 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.3.11'
     id 'io.spring.dependency-management' version '1.1.6'
-    id 'com.ewerk.gradle.plugins.querydsl' version '1.0.10'
 }
 
 group = 'com.opencontext'
@@ -39,15 +38,15 @@ dependencies {
     runtimeOnly 'org.flywaydb:flyway-database-postgresql'
 
     // LangChain4j - Core RAG Framework
-    implementation 'dev.langchain4j:langchain4j:0.36.2'
-    implementation 'dev.langchain4j:langchain4j-spring-boot-starter:0.36.2'
-    implementation 'dev.langchain4j:langchain4j-document-parser-apache-pdfbox:0.36.2'
-    implementation 'dev.langchain4j:langchain4j-embeddings:0.36.2'
-    implementation 'dev.langchain4j:langchain4j-ollama:0.36.2'
+    implementation 'dev.langchain4j:langchain4j:0.35.0'
+    implementation 'dev.langchain4j:langchain4j-spring-boot-starter:0.35.0'
+    implementation 'dev.langchain4j:langchain4j-document-parser-apache-pdfbox:0.35.0'
+    implementation 'dev.langchain4j:langchain4j-embeddings:0.35.0'
+    implementation 'dev.langchain4j:langchain4j-ollama:0.35.0'
 
-    // QueryDSL - Type-safe dynamic queries
-    implementation 'com.querydsl:querydsl-jpa:5.0.0:jakarta'
-    annotationProcessor 'com.querydsl:querydsl-apt:5.0.0:jakarta'
+    // QueryDSL (using OpenFeign fork for security patches)
+    implementation 'io.github.openfeign.querydsl:querydsl-jpa:6.11'
+    annotationProcessor 'io.github.openfeign.querydsl:querydsl-apt:6.11'
     annotationProcessor 'jakarta.annotation:jakarta.annotation-api'
     annotationProcessor 'jakarta.persistence:jakarta.persistence-api'
 
@@ -62,6 +61,10 @@ dependencies {
 
     // Structured Logging
     implementation 'net.logstash.logback:logstash-logback-encoder:7.4'
+
+    // Security patches for transitive dependencies
+    implementation 'ai.djl:api:0.31.1'  // CVE-2025-0851
+    implementation 'org.apache.commons:commons-lang3:3.18.0'  // CVE-2025-48924
 
     // Utilities
     compileOnly 'org.projectlombok:lombok'
@@ -88,24 +91,15 @@ dependencyManagement {
     }
 }
 
-tasks.named('test') {
+test {
     useJUnitPlatform()
 }
 
-// QueryDSL Configuration
-def querydslDir = layout.buildDirectory.dir("generated/querydsl").get().asFile
-
-querydsl {
-    jpa = true
-    querydslSourcesDir = querydslDir
-}
+// QueryDSL Configuration (Fixed deprecated buildDir)
+def querydslDir = "${layout.buildDirectory.get().asFile}/generated/querydsl"
 
 sourceSets {
-    main.java.srcDir querydslDir
-}
-
-compileQuerydsl {
-    options.annotationProcessorPath = configurations.querydsl
+    main.java.srcDirs += querydslDir
 }
 
 configurations {
@@ -113,4 +107,8 @@ configurations {
         extendsFrom annotationProcessor
     }
     querydsl.extendsFrom compileClasspath
+}
+
+compileJava {
+    options.generatedSourceOutputDirectory = file(querydslDir)
 }
