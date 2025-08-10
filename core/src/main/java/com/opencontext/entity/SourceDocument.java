@@ -1,6 +1,6 @@
-package com.opencontext.core.entity;
+package com.opencontext.entity;
 
-import com.opencontext.core.enums.IngestionStatus;
+import com.opencontext.enums.IngestionStatus;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;

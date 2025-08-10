@@ -1,4 +1,4 @@
-package com.opencontext.core.entity;
+package com.opencontext.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;

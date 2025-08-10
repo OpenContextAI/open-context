@@ -1,6 +1,6 @@
-package com.opencontext.core.entity;
+package com.opencontext.entity;
 
-import com.opencontext.core.enums.IngestionStatus;
+import com.opencontext.enums.IngestionStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 

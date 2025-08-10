@@ -1,7 +1,7 @@
-package com.opencontext.core.repository;
+package com.opencontext.repository;
 
-import com.opencontext.core.entity.DocumentChunk;
-import com.opencontext.core.entity.SourceDocument;
+import com.opencontext.entity.DocumentChunk;
+import com.opencontext.entity.SourceDocument;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

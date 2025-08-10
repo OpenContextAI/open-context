@@ -1,7 +1,7 @@
-package com.opencontext.core.repository;
+package com.opencontext.repository;
 
-import com.opencontext.core.entity.SourceDocument;
-import com.opencontext.core.enums.IngestionStatus;
+import com.opencontext.entity.SourceDocument;
+import com.opencontext.enums.IngestionStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
