@@ -17,7 +17,8 @@
 @rem SPDX-License-Identifier: Apache-2.0
 @rem
 =======
->>>>>>> 2b49148 (build: regenerate gradle wrapper for consistent build environment)
+@rem SPDX-License-Identifier: Apache-2.0
+@rem
 
 @if "%DEBUG%"=="" @echo off
 @rem ##########################################################################
