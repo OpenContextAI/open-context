@@ -35,12 +35,12 @@ if (!allowedTransports.includes(cliOptions.transport)) {
 // Transport configuration
 const TRANSPORT_TYPE = (cliOptions.transport || "stdio") as "stdio" | "http";
 
-// HTTP port configuration - CLI 인수 우선, 환경변수 차선
+// HTTP port configuration - CLI arguments first, environment variables second
 const CLI_PORT = (() => {
   const parsed = parseInt(cliOptions.port, 10);
   if (!isNaN(parsed)) return parsed;
   
-  // CLI 인수가 없으면 환경변수 사용
+  // Use environment variable if CLI argument is not provided
   const envPort = parseInt(process.env.MCP_SERVER_PORT || '3000', 10);
   return isNaN(envPort) ? 3000 : envPort;
 })();
@@ -87,7 +87,7 @@ function createServerInstance(clientIp?: string) {
     }
   );
 
-  // OpenContext MCP: find_knowledge 도구
+  // OpenContext MCP: find_knowledge tool
   server.registerTool(
     "find_knowledge", 
     {
@@ -102,8 +102,8 @@ The chunkId from the selected item must be used immediately to call the 'get_con
 Usage Rule:
 This tool must always be called first when the user asks a question about their internal documents or specific projects.`,
       inputSchema: { 
-        query: z.string().describe("사용자의 원본 자연어 검색어 (예: 'Spring Security에서 JWT 필터 구현')"),
-        topK: z.number().optional().describe(`반환할 결과의 최대 개수 (기본값: ${DEFAULT_TOP_K})`)
+        query: z.string().describe("User's original natural language search query (e.g., 'Spring Security JWT filter implementation')"),
+        topK: z.number().optional().describe(`Maximum number of results to return (default: ${DEFAULT_TOP_K})`)
       }
     },
     async ({ query, topK = DEFAULT_TOP_K }) => {
@@ -118,7 +118,7 @@ This tool must always be called first when the user asks a question about their 
           return { 
             content: [{ 
               type: "text", 
-              text: `검색 중 오류가 발생했습니다: ${result.error.message}` 
+              text: `Error occurred during search: ${result.error.message}` 
             }] 
           };
         }
@@ -127,7 +127,7 @@ This tool must always be called first when the user asks a question about their 
           return { 
             content: [{ 
               type: "text", 
-              text: "검색어와 관련된 지식 단락을 찾을 수 없습니다." 
+              text: "No knowledge chunks found related to the search query." 
             }] 
           };
         }
@@ -151,14 +151,14 @@ This tool must always be called first when the user asks a question about their 
         return { 
           content: [{ 
             type: "text", 
-            text: `검색 처리 중 예상치 못한 오류가 발생했습니다: ${error instanceof Error ? error.message : String(error)}` 
+            text: `Unexpected error occurred during search processing: ${error instanceof Error ? error.message : String(error)}` 
           }] 
         };
       }
     }
   );
 
-  // OpenContext MCP: get_content 도구
+  // OpenContext MCP: get_content tool
   server.registerTool(
     "get_content", 
     {
@@ -185,16 +185,16 @@ Action:
         
         if (result.error) {
           console.error(`[MCP] get_content error${clientInfo}: ${result.error.message}`);
-          return { 
-            content: [{ 
-              type: "text", 
-              text: `콘텐츠 가져오기 중 오류가 발생했습니다: ${result.error.message}` 
-            }] 
-          };
+                  return { 
+          content: [{ 
+            type: "text", 
+            text: `Error occurred while retrieving content: ${result.error.message}` 
+          }] 
+        };
         }
         
         const tokenInfo = result.tokenInfo ? 
-          `\n\n**토큰 정보:**\n- 토크나이저: ${result.tokenInfo.tokenizer}\n- 실제 토큰 수: ${result.tokenInfo.actualTokens}` : 
+          `\n\n**Token Information:**\n- Tokenizer: ${result.tokenInfo.tokenizer}\n- Actual Token Count: ${result.tokenInfo.actualTokens}` : 
           "";
         
         const responseText = result.content;
@@ -212,7 +212,7 @@ Action:
         return { 
           content: [{ 
             type: "text", 
-            text: `콘텐츠 처리 중 예상치 못한 오류가 발생했습니다: ${error instanceof Error ? error.message : String(error)}` 
+            text: `Unexpected error occurred during content processing: ${error instanceof Error ? error.message : String(error)}` 
           }] 
         };
       }
