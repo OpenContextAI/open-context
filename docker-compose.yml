@@ -158,6 +158,22 @@ services:
       - opencontext-network
     restart: unless-stopped
 
+  # Mock Server for testing
+  open-context-mock-server:
+    build:
+      context: ./mcp-adapter
+      dockerfile: Dockerfile
+    image: opencontext/mcp-adapter:0.1.0
+    container_name: open-context-mock-server
+    ports:
+      - "8001:8001" 
+    command: ["npm", "run", "mock"]
+    environment:
+      - MOCK_SERVER_PORT=8001  
+    networks:
+      - opencontext-network
+    restart: unless-stopped
+
   # Node.js MCP Adapter
   open-context-mcp-adapter:
     build:
@@ -165,10 +181,19 @@ services:
       dockerfile: Dockerfile
     image: opencontext/mcp-adapter:0.1.0
     container_name: open-context-mcp-adapter
+    ports:
+      - "3000:3000"
+    environment:
+      - OPENCONTEXT_CORE_URL=http://open-context-mock-server:8001  
+      - OPENCONTEXT_DEFAULT_TOP_K=5
+      - OPENCONTEXT_DEFAULT_MAX_TOKENS=25000
+      - MCP_SERVER_PORT=3000
+      - MCP_MODE=http
     depends_on:
-      - open-context-core
+      - open-context-mock-server  
     networks:
       - opencontext-network
+    command: ["node", "dist/index.js", "--transport", "http", "--port", "3000"]
     restart: unless-stopped
 
 volumes:
