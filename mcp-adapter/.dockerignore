@@ -35,3 +35,10 @@ Thumbs.db
 # Docker
 Dockerfile
 .dockerignore
+
+# Build output
+dist
+
+# Test coverage
+.nyc_output
+
