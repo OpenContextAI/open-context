@@ -32,6 +32,13 @@ public enum ErrorCode {
     TOKEN_LIMIT_EXCEEDED(HttpStatus.UNPROCESSABLE_ENTITY, "CTX_001", "Requested content token count exceeds maximum limit."),
     CHUNK_NOT_FOUND(HttpStatus.NOT_FOUND, "CTX_002", "Chunk with the specified ID not found."),
 
+    // --- FILE STORAGE ---
+    FILE_UPLOAD_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FILE_001", "Failed to upload file to storage."),
+    FILE_NOT_FOUND(HttpStatus.NOT_FOUND, "FILE_002", "Requested file not found in storage."),
+    FILE_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "FILE_003", "Failed to delete file from storage."),
+    STORAGE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "FILE_004", "Storage system error occurred."),
+    FILE_ACCESS_DENIED(HttpStatus.FORBIDDEN, "FILE_005", "Access denied to the requested file."),
+
     // --- INFRASTRUCTURE/EXTERNAL SERVICES ---
     INGESTION_PIPELINE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "INFRA_001", "Internal error occurred during document processing."),
     EXTERNAL_SERVICE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "INFRA_002", "External service is not responding."),

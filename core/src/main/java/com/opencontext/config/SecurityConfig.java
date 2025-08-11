@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 public class SecurityConfig {
 
     private final Environment environment;
+    private final ApiKeyAuthenticationFilter apiKeyAuthenticationFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -62,15 +63,15 @@ public class SecurityConfig {
                 // Allow development mock data endpoints (development only)
                 .requestMatchers("/api/v1/dev/**").permitAll()
                 
-                // Admin APIs will require API Key authentication (TODO: implement in next step)
-                .requestMatchers("/api/v1/sources/**").permitAll() // Temporary - will add API key auth
+                // Admin APIs require API Key authentication
+                .requestMatchers("/api/v1/sources/**").permitAll() // Authentication handled by filter
                 
                 // All other requests require authentication
                 .anyRequest().authenticated()
             );
         
-        // TODO: Add API Key authentication filter for Admin APIs
-        // http.addFilterBefore(apiKeyAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        // Add API Key authentication filter for Admin APIs
+        http.addFilterBefore(apiKeyAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         
         log.info("Security configuration completed successfully");
         return http.build();
