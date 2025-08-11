@@ -2,17 +2,34 @@
   "name": "mcp-adapter",
   "version": "1.0.0",
   "description": "OpenContext MCP Adapter",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "type": "module",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+    "build": "tsc",
+    "start": "tsx index.ts",
+    "dev": "tsx index.ts",
+    "mock": "node dist/mock-server.js",
+    "clean": "rm -rf dist"
   },
-  "keywords": ["mcp", "adapter"],
-  "author": "OpenContext Team",
+  "keywords": [
+    "mcp",
+    "model-client-protocol",
+    "context-protocol",
+    "adapter",
+    "opencontext",
+    "rag"
+  ],
+  "author": "OpenContext Development Team",
   "license": "MIT",
-  "dependencies": {},
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.1",
+    "commander": "^14.0.0",
+    "zod": "^3.25.76"
+  },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "@types/node": "^24.0.0",
+    "tsx": "^4.20.3",
+    "typescript": "^5.9.2"
   },
   "engines": {
     "node": ">=18.0.0"
