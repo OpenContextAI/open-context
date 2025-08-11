@@ -82,4 +82,17 @@ public class CommonResponse<T> {
                 LocalDateTime.now()
         );
     }
+
+    /**
+     * Static factory method for creating error responses from ErrorCode enum.
+     */
+    public static <T> CommonResponse<T> error(com.opencontext.enums.ErrorCode errorCode, String message) {
+        return new CommonResponse<>(
+                false,
+                null,
+                message,
+                errorCode.getCode(),
+                LocalDateTime.now()
+        );
+    }
 }
