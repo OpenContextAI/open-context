@@ -41,9 +41,15 @@ public enum ErrorCode {
 
     // --- INFRASTRUCTURE/EXTERNAL SERVICES ---
     INGESTION_PIPELINE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "INFRA_001", "Internal error occurred during document processing."),
-    EXTERNAL_SERVICE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "INFRA_002", "External service is not responding."),
-    DB_CONNECTION_FAILED(HttpStatus.SERVICE_UNAVAILABLE, "INFRA_003", "Database connection failed."),
-    ELASTICSEARCH_ERROR(HttpStatus.SERVICE_UNAVAILABLE, "INFRA_004", "Search engine error occurred.");
+    DELETION_PIPELINE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "INFRA_002", "Internal error occurred during document deletion."),
+    DOCUMENT_PARSING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "INFRA_003", "Failed to parse document using external API."),
+    EMBEDDING_GENERATION_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "INFRA_004", "Failed to generate embeddings for document chunks."),
+    INDEXING_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "INFRA_005", "Failed to index document chunks."),
+    EXTERNAL_API_ERROR(HttpStatus.SERVICE_UNAVAILABLE, "INFRA_006", "External API call failed."),
+    DATABASE_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "INFRA_007", "Database operation failed."),
+    EXTERNAL_SERVICE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "INFRA_008", "External service is not responding."),
+    DB_CONNECTION_FAILED(HttpStatus.SERVICE_UNAVAILABLE, "INFRA_009", "Database connection failed."),
+    ELASTICSEARCH_ERROR(HttpStatus.SERVICE_UNAVAILABLE, "INFRA_010", "Search engine error occurred.");
 
     private final HttpStatus httpStatus;
     private final String code;
