@@ -21,7 +21,10 @@ import java.util.*;
  * 임베딩된 청크를 Elasticsearch와 PostgreSQL에 저장하는 서비스.
  * 
  * Elasticsearch에는 검색을 위한 벡터와 메타데이터를,
- * PostgreSQL에는 계층 구조 정보를 저장합니다.
+ * Service for storing embedded chunks in Elasticsearch and PostgreSQL.
+ * 
+ * Stores vectors and metadata in Elasticsearch for search,
+ * and hierarchical structure information in PostgreSQL.
  */
 @Slf4j
 @Service
