@@ -84,6 +84,19 @@ public class CommonResponse<T> {
     }
 
     /**
+     * Static factory method for creating error responses with message only.
+     */
+    public static <T> CommonResponse<T> error(String message) {
+        return new CommonResponse<>(
+                false,
+                null,
+                message,
+                "INTERNAL_ERROR",
+                LocalDateTime.now()
+        );
+    }
+
+    /**
      * Static factory method for creating error responses from ErrorCode enum.
      */
     public static <T> CommonResponse<T> error(com.opencontext.enums.ErrorCode errorCode, String message) {
