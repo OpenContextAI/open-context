@@ -36,6 +36,12 @@ public class DocumentChunk {
     private UUID id;
 
     /**
+     * Chunk ID as string for consistency with Elasticsearch.
+     */
+    @Column(name = "chunk_id", nullable = false, unique = true, length = 255)
+    private String chunkId;
+
+    /**
      * Foreign key to the source document this chunk belongs to.
      * When parent document is deleted, related chunks are also deleted (CASCADE).
      */
@@ -44,13 +50,43 @@ public class DocumentChunk {
     private SourceDocument sourceDocument;
 
     /**
-     * Foreign key to the parent chunk ID for hierarchical structure.
+     * Source document ID as UUID for direct access.
+     */
+    @Column(name = "source_document_uuid", nullable = false)
+    private UUID sourceDocumentId;
+
+    /**
+     * Parent chunk ID as string for consistency with Elasticsearch.
+     */
+    @Column(name = "parent_chunk_id")
+    private UUID parentChunkId;
+
+    /**
+     * Foreign key to the parent chunk for hierarchical structure.
      * This enables reconstruction of document's tree structure.
      * Root chunks have null parent_chunk_id.
      */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parent_chunk_id", foreignKey = @ForeignKey(name = "fk_chunk_parent"))
+    @JoinColumn(name = "parent_chunk_uuid", foreignKey = @ForeignKey(name = "fk_chunk_parent"))
     private DocumentChunk parentChunk;
+
+    /**
+     * Title or heading of the section this chunk belongs to.
+     */
+    @Column(name = "title", length = 500)
+    private String title;
+
+    /**
+     * Hierarchy level of this chunk in the document structure.
+     */
+    @Column(name = "hierarchy_level", nullable = false)
+    private Integer hierarchyLevel;
+
+    /**
+     * Type of the original document element (Title, Header, NarrativeText, etc.).
+     */
+    @Column(name = "element_type", length = 50)
+    private String elementType;
 
     /**
      * Order sequence among sibling chunks with the same parent_chunk_id.
