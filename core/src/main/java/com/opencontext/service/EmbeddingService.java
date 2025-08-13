@@ -17,7 +17,9 @@ import java.util.*;
 /**
  * LangChain4j와 Ollama를 사용하여 텍스트 청크의 임베딩 벡터를 생성하는 서비스.
  * 
- * 각 청크의 의미적 표현을 벡터로 변환하여 시맨틱 검색을 가능하게 합니다.
+ * Service for generating embedding vectors for text chunks using LangChain4j and Ollama.
+ * 
+ * Converts the semantic representation of each chunk into a vector to enable semantic search.
  */
 @Slf4j
 @Service
