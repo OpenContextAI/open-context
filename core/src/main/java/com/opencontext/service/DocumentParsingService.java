@@ -21,7 +21,9 @@ import java.util.UUID;
 /**
  * Unstructured API를 사용하여 문서를 파싱하는 서비스.
  * 
- * PDF, Markdown, 텍스트 파일을 구조화된 요소로 변환합니다.
+ * Service for parsing documents using the Unstructured API.
+ * 
+ * Converts PDF, Markdown, and text files into structured elements.
  */
 @Slf4j
 @Service
