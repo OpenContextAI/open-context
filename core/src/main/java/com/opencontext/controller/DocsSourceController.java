@@ -1,4 +1,4 @@
-package com.opencontext.controller.SourceController;
+package com.opencontext.controller;
 
 import com.opencontext.common.CommonResponse;
 import com.opencontext.common.PageResponse;
