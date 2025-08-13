@@ -26,7 +26,25 @@ public class ChunkingService {
      * 
      * @param documentId 문서 ID
      * @param parsedElements Unstructured API에서 파싱된 요소 목록
-     * @return 구조화된 청크 목록
+ * Service for splitting parsed document elements into meaningful chunks.
+ * 
+ * Generates search-optimized chunks while maintaining hierarchical structure,
+ * based on the results from the Unstructured API.
+ */
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class ChunkingService {
+
+    private static final int MAX_CHUNK_SIZE = 1000; // Maximum chunk size (number of characters)
+    private static final int CHUNK_OVERLAP = 200;   // Overlap size between chunks
+
+    /**
+     * Converts parsed elements into structured chunks.
+     * 
+     * @param documentId Document ID
+     * @param parsedElements List of elements parsed by the Unstructured API
+     * @return List of structured chunks
      */
     public List<StructuredChunk> createChunks(UUID documentId, List<Map<String, Object>> parsedElements) {
         long startTime = System.currentTimeMillis();
