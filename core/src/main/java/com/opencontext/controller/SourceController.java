@@ -36,7 +36,9 @@ import java.util.UUID;
 /**
  * 소스 문서 관리를 위한 REST API 컨트롤러.
  * 
- * 파일 업로드, 수집 파이프라인 관리, 문서 목록 조회 등의 기능을 제공합니다.
+ * REST API controller for managing source documents.
+ *
+ * Provides functionalities such as file upload, ingestion pipeline management, and document listing.
  */
 @Slf4j
 @RestController
