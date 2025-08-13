@@ -137,4 +137,13 @@ public interface DocumentChunkRepository extends JpaRepository<DocumentChunk, UU
      * @param sourceDocument the source document whose chunks should be deleted
      */
     void deleteBySourceDocument(SourceDocument sourceDocument);
+
+    /**
+     * Deletes all chunks belonging to a specific source document by ID.
+     * This is used when a source document is being deleted.
+     * 
+     * @param sourceDocumentId the source document ID whose chunks should be deleted
+     * @return the number of deleted chunks
+     */
+    int deleteBySourceDocumentId(UUID sourceDocumentId);
 }
