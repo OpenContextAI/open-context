@@ -126,6 +126,31 @@ public class SourceDocument {
     }
 
     /**
+     * Updates the last ingested timestamp.
+     * 
+     * @param timestamp the timestamp to set
+     */
+    public void updateLastIngestedAt(LocalDateTime timestamp) {
+        this.lastIngestedAt = timestamp;
+    }
+
+    /**
+     * Updates the error message.
+     * 
+     * @param errorMessage the error message to set
+     */
+    public void updateErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
+
+    /**
+     * Clears the error message.
+     */
+    public void clearErrorMessage() {
+        this.errorMessage = null;
+    }
+
+    /**
      * Checks if the document is currently being processed.
      * 
      * @return true if document is in any processing state
