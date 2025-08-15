@@ -104,7 +104,7 @@ public class IndexingService {
                 try {
                     bulkBody.append(objectMapper.writeValueAsString(indexMeta)).append("\n");
                     
-                    // 문서 데이터 (PRD 스키마 준수)
+                    // 문서 데이터
                     Map<String, Object> doc = createElasticsearchDocumentPRD(chunk);
                     bulkBody.append(objectMapper.writeValueAsString(doc)).append("\n");
                 } catch (Exception jsonException) {
@@ -135,7 +135,7 @@ public class IndexingService {
                         "Elasticsearch bulk indexing failed");
             }
 
-            // 벌크 응답에서 오류 확인 (PRD 요구사항)
+            // 벌크 응답에서 오류 확인 
             Map<String, Object> responseBody = response.getBody();
             if (responseBody != null && Boolean.TRUE.equals(responseBody.get("errors"))) {
                 // 첫 번째 에러의 상세 정보 추출
@@ -233,27 +233,26 @@ public class IndexingService {
     }
 
     /**
-     * PRD 스키마에 맞는 Elasticsearch 문서 생성
-     * 필드명: camelCase, metadata 하위구조 준수
+     * Elasticsearch 문서 생성
      */
     private Map<String, Object> createElasticsearchDocumentPRD(StructuredChunk chunk) {
         Map<String, Object> doc = new HashMap<>();
         
-        // PRD 루트 필드 (camelCase)
+        // 루트 필드 (camelCase)
         doc.put("chunkId", chunk.getChunkId());
         doc.put("sourceDocumentId", chunk.getDocumentId());
         doc.put("content", sanitizeContent(chunk.getContent()));
         doc.put("embedding", chunk.getEmbedding());
         doc.put("indexedAt", java.time.Instant.now().toString()); // ISO 문자열
         
-        // PRD metadata 구조
+        // metadata 구조
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("title", chunk.getTitle());
         metadata.put("hierarchyLevel", chunk.getHierarchyLevel());
         metadata.put("sequenceInDocument", 0); // 기본값
         metadata.put("language", "ko"); // 한국어 기본값
 
-        // 실제 파일 타입을 SourceDocument에서 조회하여 반영 (기본값 하드코딩 제거)
+        // 실제 파일 타입을 SourceDocument에서 조회하여 반영 
         String resolvedFileType = "UNKNOWN";
         try {
             UUID srcId = UUID.fromString(chunk.getDocumentId());
