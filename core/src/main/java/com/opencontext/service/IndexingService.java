@@ -7,6 +7,7 @@ import com.opencontext.enums.ErrorCode;
 import com.opencontext.exception.BusinessException;
 import com.opencontext.repository.DocumentChunkRepository;
 import com.opencontext.repository.SourceDocumentRepository;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,7 +16,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
+import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.Arrays;
 
 /**
  * 임베딩된 청크를 Elasticsearch와 PostgreSQL에 저장하는 서비스.
@@ -35,6 +38,7 @@ public class IndexingService {
     private final DocumentChunkRepository documentChunkRepository;
     private final SourceDocumentRepository sourceDocumentRepository;
     private final RestTemplate restTemplate;
+    private final ObjectMapper objectMapper;
 
     @Value("${app.elasticsearch.url:http://localhost:9200}")
     private String elasticsearchUrl;
@@ -97,18 +101,26 @@ public class IndexingService {
                 Map<String, Object> indexMeta = Map.of(
                         "index", Map.of("_id", chunk.getChunkId())
                 );
-                bulkBody.append(toJsonString(indexMeta)).append("\n");
-                
-                // 문서 데이터
-                Map<String, Object> doc = createElasticsearchDocument(chunk);
-                bulkBody.append(toJsonString(doc)).append("\n");
+                try {
+                    bulkBody.append(objectMapper.writeValueAsString(indexMeta)).append("\n");
+                    
+                    // 문서 데이터
+                    Map<String, Object> doc = createElasticsearchDocumentPRD(chunk);
+                    bulkBody.append(objectMapper.writeValueAsString(doc)).append("\n");
+                } catch (Exception jsonException) {
+                    log.error("JSON 직렬화 실패, 청크 건너뛰기: chunkId={}, error={}", 
+                            chunk.getChunkId(), jsonException.getMessage());
+                    continue; // 해당 청크는 건너뛰고 계속 진행
+                }
             }
 
-            // HTTP 헤더 설정
+            // HTTP 헤더 설정 (UTF-8 명시)
             HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.valueOf("application/x-ndjson"));
+            headers.setContentType(new MediaType("application", "x-ndjson", StandardCharsets.UTF_8));
 
-            HttpEntity<String> requestEntity = new HttpEntity<>(bulkBody.toString(), headers);
+            // 본문을 UTF-8 바이트로 전송하여 한글이 '?'로 치환되는 문제 방지
+            byte[] requestBytes = bulkBody.toString().getBytes(StandardCharsets.UTF_8);
+            HttpEntity<byte[]> requestEntity = new HttpEntity<>(requestBytes, headers);
 
             // 벌크 API 호출
             ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
@@ -123,10 +135,24 @@ public class IndexingService {
                         "Elasticsearch bulk indexing failed");
             }
 
-            // 응답에서 오류 확인
+            // 벌크 응답에서 오류 확인 
             Map<String, Object> responseBody = response.getBody();
             if (responseBody != null && Boolean.TRUE.equals(responseBody.get("errors"))) {
-                log.warn("Some documents failed to index in Elasticsearch: {}", responseBody);
+                // 첫 번째 에러의 상세 정보 추출
+                List<Map<String, Object>> items = (List<Map<String, Object>>) responseBody.get("items");
+                if (items != null && !items.isEmpty()) {
+                    Map<String, Object> firstItem = items.get(0);
+                    Map<String, Object> indexResult = (Map<String, Object>) firstItem.get("index");
+                    if (indexResult != null && indexResult.containsKey("error")) {
+                        Map<String, Object> error = (Map<String, Object>) indexResult.get("error");
+                        String reason = (String) error.get("reason");
+                        log.error("Elasticsearch bulk indexing error: {}", reason);
+                        throw new BusinessException(ErrorCode.EXTERNAL_API_ERROR, 
+                                "Elasticsearch bulk indexing failed: " + reason);
+                    }
+                }
+                throw new BusinessException(ErrorCode.EXTERNAL_API_ERROR, 
+                        "Elasticsearch bulk indexing failed with errors");
             }
 
             long totalDuration = System.currentTimeMillis() - esStartTime;
@@ -207,26 +233,42 @@ public class IndexingService {
     }
 
     /**
-     * Elasticsearch 문서를 생성합니다.
+     * Elasticsearch 문서 생성
      */
-    private Map<String, Object> createElasticsearchDocument(StructuredChunk chunk) {
+    private Map<String, Object> createElasticsearchDocumentPRD(StructuredChunk chunk) {
         Map<String, Object> doc = new HashMap<>();
         
-        doc.put("document_id", chunk.getDocumentId());
-        doc.put("chunk_id", chunk.getChunkId());
-        
-        // ✅ content 필드 정리하여 저장 (JSON 파싱 에러 방지)
-        String cleanContent = sanitizeContent(chunk.getContent());
-        doc.put("content", cleanContent);
-        
-        doc.put("title", chunk.getTitle());
-        doc.put("hierarchy_level", chunk.getHierarchyLevel());
-        doc.put("parent_chunk_id", chunk.getParentChunkId());
-        doc.put("element_type", chunk.getElementType());
+        // 루트 필드 (camelCase)
+        doc.put("chunkId", chunk.getChunkId());
+        doc.put("sourceDocumentId", chunk.getDocumentId());
+        doc.put("content", sanitizeContent(chunk.getContent()));
         doc.put("embedding", chunk.getEmbedding());
-        doc.put("metadata", chunk.getMetadata());
-        doc.put("indexed_at", new Date());
+        doc.put("indexedAt", java.time.Instant.now().toString()); // ISO 문자열
+        
+        // metadata 구조
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("title", chunk.getTitle());
+        metadata.put("hierarchyLevel", chunk.getHierarchyLevel());
+        metadata.put("sequenceInDocument", 0); // 기본값
+        metadata.put("language", "ko"); // 한국어 기본값
 
+        // 실제 파일 타입을 SourceDocument에서 조회하여 반영 
+        String resolvedFileType = "UNKNOWN";
+        try {
+            UUID srcId = UUID.fromString(chunk.getDocumentId());
+            resolvedFileType = sourceDocumentRepository.findById(srcId)
+                    .map(SourceDocument::getFileType)
+                    .orElse("UNKNOWN");
+        } catch (Exception e) {
+            log.warn("Failed to resolve fileType for documentId={}, defaulting to UNKNOWN", chunk.getDocumentId());
+        }
+        metadata.put("fileType", resolvedFileType);
+        
+        // breadcrumbs 처리 (기본값: 빈 배열)
+        metadata.put("breadcrumbs", Arrays.asList()); // 빈 배열 기본값
+        
+        doc.put("metadata", metadata);
+        
         return doc;
     }
 
@@ -256,31 +298,4 @@ public class IndexingService {
             .trim();
     }
 
-    /**
-     * 객체를 JSON 문자열로 변환합니다.
-     * 실제 구현에서는 Jackson ObjectMapper를 사용해야 합니다.
-     */
-    private String toJsonString(Object obj) {
-        // 간단한 구현 - 실제로는 ObjectMapper를 사용해야 함
-        if (obj instanceof Map) {
-            Map<?, ?> map = (Map<?, ?>) obj;
-            StringBuilder json = new StringBuilder("{");
-            boolean first = true;
-            for (Map.Entry<?, ?> entry : map.entrySet()) {
-                if (!first) json.append(",");
-                json.append("\"").append(entry.getKey()).append("\":");
-                if (entry.getValue() instanceof String) {
-                    json.append("\"").append(entry.getValue()).append("\"");
-                } else if (entry.getValue() instanceof Map) {
-                    json.append(toJsonString(entry.getValue()));
-                } else {
-                    json.append(entry.getValue());
-                }
-                first = false;
-            }
-            json.append("}");
-            return json.toString();
-        }
-        return obj.toString();
-    }
 }

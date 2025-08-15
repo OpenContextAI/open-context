@@ -7,30 +7,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 
-/**
- * 파싱된 문서 요소를 의미 있는 청크로 분할하는 서비스.
- * 
- * Unstructured API의 결과를 기반으로 계층적 구조를 유지하면서
- * 검색에 최적화된 청크를 생성합니다.
- */
-@Slf4j
-@Service
-@RequiredArgsConstructor
-public class ChunkingService {
-
-    private static final int MAX_CHUNK_SIZE = 1000; // 최대 청크 크기 (문자 수)
-    private static final int CHUNK_OVERLAP = 200;   // 청크 간 중복 크기
-
-    /**
-     * 파싱된 요소들을 구조화된 청크로 변환합니다.
-     * 
-     * @param documentId 문서 ID
-     * @param parsedElements Unstructured API에서 파싱된 요소 목록
- * Service for splitting parsed document elements into meaningful chunks.
- * 
- * Generates search-optimized chunks while maintaining hierarchical structure,
- * based on the results from the Unstructured API.
- */
 @Slf4j
 @Service
 @RequiredArgsConstructor

@@ -3,6 +3,7 @@ package com.opencontext.dto;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -11,7 +12,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Individual search result item for exploratory knowledge discovery.
@@ -25,11 +25,11 @@ import java.util.UUID;
 public class SearchResultItem {
 
     /**
-     * Unique identifier of the chunk for subsequent get_content requests.
+     * Chunk identifier used by get_content (string: "<uuid>-chunk-<n>").
      */
-    @Schema(description = "Chunk identifier for content retrieval", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotNull
-    private UUID chunkId;
+    @Schema(description = "Chunk identifier for content retrieval (e.g., '<uuid>-chunk-0')", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotBlank
+    private String chunkId;
 
     /**
      * Title or heading of the chunk for user context.
