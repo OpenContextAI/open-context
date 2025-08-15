@@ -98,3 +98,41 @@ logging:
 
 server:
   port: 8080
+
+---
+# Docker Profile Configuration
+spring:
+  config:
+    activate:
+      on-profile: docker
+  
+  # Database Configuration (Docker)
+  datasource:
+    url: jdbc:postgresql://postgres:5432/opencontext
+    username: user
+    password: password
+
+# Application-specific Configuration (Docker)
+app:
+  # Elasticsearch Configuration (Docker)
+  elasticsearch:
+    url: http://elasticsearch:9200
+    index: document_chunks_index
+  
+  # Ollama Configuration (Docker)
+  ollama:
+    api:
+      url: http://ollama:11434
+    embedding:
+      model: dengcao/Qwen3-Embedding-0.6B:F16
+
+# MinIO Configuration (Docker)
+minio:
+  endpoint: http://minio:9000
+  access-key: minioadmin
+  secret-key: minioadmin123!
+  bucket-name: opencontext-documents
+
+# Unstructured.io Configuration (Docker)
+unstructured:
+  base-url: http://unstructured-api:8000
