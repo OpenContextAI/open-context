@@ -68,7 +68,7 @@ public class SourceController implements DocsSourceController{
      * @return 업로드 결과 및 문서 정보
      */
     @Override
-    @PostMapping("/upload")
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CommonResponse<SourceUploadResponse>> uploadFile(
             @RequestParam("file") MultipartFile file) {
         log.info("File upload requested: filename={}, size={}", file.getOriginalFilename(), file.getSize());

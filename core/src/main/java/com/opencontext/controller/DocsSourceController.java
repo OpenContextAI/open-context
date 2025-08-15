@@ -31,7 +31,7 @@ import java.util.UUID;
     name = "Source Document Management", 
     description = "Admin APIs for document ingestion pipeline management. Requires X-API-KEY authentication."
 )
-@SecurityRequirement(name = "X-API-KEY")
+@SecurityRequirement(name = "ApiKeyAuth")
 public interface DocsSourceController {
 
     /**
@@ -61,9 +61,8 @@ public interface DocsSourceController {
             content = @Content(
                 mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
                 examples = @ExampleObject(
-                    name = "File Upload",
-                    description = "Upload a PDF document",
-                    value = "file: [binary PDF content]"
+                    name = "Upload a Markdown file",
+                    value = "(Use the file picker UI to attach a .md file)"
                 )
             )
         )
@@ -263,7 +262,7 @@ public interface DocsSourceController {
         @ApiResponse(responseCode = "409", description = "Conflict - document is currently being processed")
     })
     ResponseEntity<CommonResponse<String>> resyncSourceDocument(
-            @Parameter(description = "Source document ID", required = true)
+            @Parameter(description = "Source document ID", required = true, example = "a1b2c3d4-e5f6-7890-1234-567890abcdef")
             @PathVariable UUID sourceId
     );
 
@@ -311,7 +310,7 @@ public interface DocsSourceController {
         @ApiResponse(responseCode = "409", description = "Conflict - document is currently being processed")
     })
     ResponseEntity<CommonResponse<String>> deleteSourceDocument(
-            @Parameter(description = "Source document ID", required = true)
+            @Parameter(description = "Source document ID", required = true, example = "a1b2c3d4-e5f6-7890-1234-567890abcdef")
             @PathVariable UUID sourceId
     );
 }
