@@ -35,14 +35,29 @@ spring:
       max-file-size: 100MB
       max-request-size: 100MB
 
-# Elasticsearch Configuration (Development)
-elasticsearch:
-  hosts: localhost:9200
-
-# Ollama Configuration (Development)
-ollama:
-  base-url: http://localhost:11434
-  model: dengcao/Qwen3-Embedding-0.6B:F16
+# Application-specific Configuration
+app:
+  # Elasticsearch Configuration
+  elasticsearch:
+    url: http://localhost:9200
+    index: document_chunks_index
+  
+  # Ollama Configuration  
+  ollama:
+    api:
+      url: http://localhost:11434
+    embedding:
+      model: dengcao/Qwen3-Embedding-0.6B:F16
+  
+  # Embedding Configuration
+  embedding:
+    batch-size: 10
+  
+  # Search Configuration
+  search:
+    snippet-max-length: 50
+    bm25-weight: 0.3
+    vector-weight: 0.7
 
 # MinIO Configuration (Development)
 minio:
