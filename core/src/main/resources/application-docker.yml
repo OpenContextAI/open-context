@@ -45,8 +45,10 @@ minio:
   bucket-name: opencontext-documents
 
 # Unstructured.io Configuration (Docker)
-unstructured:
-  base-url: http://unstructured-api:8000
+app:
+  unstructured:
+    api:
+      url: http://unstructured-api:8000
 
 # Application Configuration
 opencontext:
