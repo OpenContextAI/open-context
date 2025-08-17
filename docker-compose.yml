@@ -122,6 +122,8 @@ services:
     container_name: unstructured-api
     ports:
       - "8000:8000"
+    environment:
+      - UNSTRUCTURED_MEMORY_FREE_MINIMUM_MB=512
     networks:
       - opencontext-network
     restart: unless-stopped
@@ -144,8 +146,8 @@ services:
       - OLLAMA_BASE_URL=http://ollama:11434
       - UNSTRUCTURED_API_URL=http://unstructured-api:8000
       - MINIO_URL=http://minio:9000
-      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-your-minio-access-key}
-      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-your-minio-secret-key}
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin123!
     depends_on:
       postgres:
         condition: service_healthy
@@ -187,13 +189,13 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - OPENCONTEXT_CORE_URL=http://open-context-mock-server:8001  
+      - OPENCONTEXT_CORE_URL=http://open-context-core:8080  
       - OPENCONTEXT_DEFAULT_TOP_K=5
       - OPENCONTEXT_DEFAULT_MAX_TOKENS=25000
       - MCP_SERVER_PORT=3000
       - MCP_MODE=http
     depends_on:
-      - open-context-mock-server  
+      - open-context-core  
     networks:
       - opencontext-network
     command: ["node", "dist/index.js", "--transport", "http", "--port", "3000"]
