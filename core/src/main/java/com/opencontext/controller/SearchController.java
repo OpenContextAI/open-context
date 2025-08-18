@@ -35,7 +35,7 @@ public class SearchController implements DocsSearchController {
     @GetMapping("/search")
     public ResponseEntity<CommonResponse<SearchResultsResponse>> search(
             @RequestParam String query,
-            @RequestParam(defaultValue = "5") Integer topK) {
+            @RequestParam(defaultValue = "50") Integer topK) {
         
         log.info("검색 요청: query='{}', topK={}", query, topK);
         
