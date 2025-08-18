@@ -53,8 +53,8 @@ public class FileStorageService {
     @Value("${app.elasticsearch.index:document-chunks}")
     private String indexName;
     
-    // Supported file types for document processing
-    private static final List<String> SUPPORTED_CONTENT_TYPES = List.of(
+    // Supported file types for document processing (canonical)
+    private static final List<String> ALLOWED_CANONICAL_CONTENT_TYPES = List.of(
             "application/pdf",
             "text/markdown",
             "text/plain"
@@ -69,7 +69,7 @@ public class FileStorageService {
     public SourceDocument uploadFileWithMetadata(MultipartFile file) {
         String filename = file.getOriginalFilename();
         long fileSize = file.getSize();
-        String contentType = file.getContentType();
+        String contentType = resolveContentType(file);
         
         log.info("📤 [UPLOAD] Starting file upload with metadata: filename={}, size={} bytes, contentType={}", 
                 filename, fileSize, contentType);
@@ -98,7 +98,7 @@ public class FileStorageService {
         try {
             // Upload file to MinIO
             log.debug("☁️ [UPLOAD] Step 4/5: Uploading file to MinIO: {}", filename);
-            String objectKey = uploadFile(file);
+            String objectKey = uploadFile(file, contentType);
             log.info("✅ [UPLOAD] File uploaded to MinIO successfully: {} -> {}", filename, objectKey);
 
             // Create SourceDocument entity
@@ -106,7 +106,7 @@ public class FileStorageService {
             SourceDocument sourceDocument = SourceDocument.builder()
                     .originalFilename(file.getOriginalFilename())
                     .fileStoragePath(objectKey)
-                    .fileType(determineFileType(file.getContentType()))
+                    .fileType(determineFileType(contentType))
                     .fileSize(file.getSize())
                     .fileChecksum(fileChecksum)
                     .ingestionStatus(IngestionStatus.PENDING)
@@ -139,7 +139,7 @@ public class FileStorageService {
      * @param file the multipart file to upload
      * @return the object key where the file was stored
      */
-    public String uploadFile(MultipartFile file) {
+    public String uploadFile(MultipartFile file, String resolvedContentType) {
         try {
             // Ensure bucket exists
             ensureBucketExists();
@@ -152,7 +152,7 @@ public class FileStorageService {
                     .bucket(minioConfig.getBucketName())
                     .object(objectKey)
                     .stream(file.getInputStream(), file.getSize(), -1)
-                    .contentType(file.getContentType())
+                    .contentType(resolvedContentType)
                     .build();
 
             minioClient.putObject(putObjectArgs);
@@ -562,18 +562,23 @@ public class FileStorageService {
                     "File size exceeds maximum limit of 100MB");
         }
 
-        String contentType = file.getContentType();
-        if (contentType == null || !SUPPORTED_CONTENT_TYPES.contains(contentType)) {
-            throw new BusinessException(ErrorCode.UNSUPPORTED_MEDIA_TYPE, 
-                    "Unsupported file type. Supported types: PDF, Markdown, and plain text files.");
-        }
-
         String filename = file.getOriginalFilename();
         if (filename == null || filename.trim().isEmpty()) {
             throw new BusinessException(ErrorCode.INVALID_REQUEST, "Filename cannot be empty");
         }
 
-        log.debug("✅ [UPLOAD] File validation passed: filename={}", filename);
+        // Resolve canonical content type from both content-type header and filename extension
+        String resolvedContentType = resolveContentType(file);
+        
+        // Check if the resolved content type is supported
+        if (!ALLOWED_CANONICAL_CONTENT_TYPES.contains(resolvedContentType)) {
+            log.debug("❌ [UPLOAD] Unsupported content type: filename={}, original={}, resolved={}", 
+                    filename, file.getContentType(), resolvedContentType);
+            throw new BusinessException(ErrorCode.UNSUPPORTED_MEDIA_TYPE,
+                    "Unsupported file type. Supported types: PDF, Markdown, and plain text files.");
+        }
+
+        log.debug("✅ [UPLOAD] File validation passed: filename={}, resolved_type={}", filename, resolvedContentType);
     }
 
     /**
@@ -610,6 +615,46 @@ public class FileStorageService {
             case "text/plain" -> "TEXT";
             default -> "UNKNOWN";
         };
+    }
+
+    /**
+     * Resolves the effective content type for the uploaded file.
+     * If the inbound content type is null or generic (e.g., application/octet-stream),
+     * infer from the filename extension and normalize to a canonical, allowed type.
+     */
+    private String resolveContentType(MultipartFile file) {
+        String inbound = file.getContentType();
+        // If clearly an allowed canonical type, return as-is
+        if (ALLOWED_CANONICAL_CONTENT_TYPES.contains(inbound)) {
+            return inbound;
+        }
+
+        // Try to infer from file extension for generic or alternate types
+        String filename = file.getOriginalFilename();
+        String ext = (filename == null) ? null : getFileExtension(filename).toLowerCase();
+
+        if (ext != null) {
+            return switch (ext) {
+                case "pdf" -> "application/pdf";
+                case "md", "markdown" -> "text/markdown";
+                case "txt" -> "text/plain";
+                default -> (inbound != null ? inbound : "application/octet-stream");
+            };
+        }
+
+        // Fallback to inbound or generic
+        return inbound != null ? inbound : "application/octet-stream";
+    }
+
+    /**
+     * Returns the extension without the leading dot. Example: "README.md" -> "md".
+     */
+    private String getFileExtension(String filename) {
+        int lastDot = filename.lastIndexOf('.');
+        if (lastDot == -1 || lastDot == filename.length() - 1) {
+            return "";
+        }
+        return filename.substring(lastDot + 1);
     }
 
     /**
