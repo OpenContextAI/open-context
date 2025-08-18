@@ -9,6 +9,9 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +37,9 @@ public class SecurityConfig {
         http
             // Disable CSRF for REST API
             .csrf(AbstractHttpConfigurer::disable)
+            
+            // Enable CORS for frontend integration
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             
             // Disable form login and basic auth
             .formLogin(AbstractHttpConfigurer::disable)
@@ -75,5 +81,24 @@ public class SecurityConfig {
         
         log.info("Security configuration completed successfully");
         return http.build();
+    }
+
+    /**
+     * CORS configuration for frontend integration
+     */
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.addAllowedOriginPattern("*"); // Allow all origins in development
+        configuration.addAllowedMethod("*"); // Allow all HTTP methods
+        configuration.addAllowedHeader("*"); // Allow all headers
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
+        
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/**", configuration);
+        
+        log.info("CORS configuration applied to /api/** endpoints");
+        return source;
     }
 }
