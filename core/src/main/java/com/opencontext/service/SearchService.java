@@ -63,7 +63,7 @@ public class SearchService {
             Map<String, Object> searchResponse = executeElasticsearchQuery(query, queryEmbedding, topK);
             
             // 3단계: 검색 결과를 DTO로 변환
-            List<SearchResultItem> results = parseSearchResults(searchResponse);
+            List<SearchResultItem> results = parseSearchResults(searchResponse); 
             
             long duration = System.currentTimeMillis() - startTime;
             log.info("하이브리드 검색 완료: query='{}', 결과수={}, 소요시간={}ms", 
