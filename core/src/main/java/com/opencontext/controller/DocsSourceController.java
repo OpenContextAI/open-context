@@ -46,9 +46,12 @@ public interface DocsSourceController {
             **Authentication Required:** X-API-KEY header must be provided.
             
             **Supported File Types:**
-            - PDF documents (application/pdf)
-            - Markdown files (text/markdown)
-            - Plain text files (text/plain)
+            - PDF documents (application/pdf, .pdf files)
+            - Markdown files (text/markdown, .md or .markdown files)
+            - Plain text files (text/plain, .txt files)
+            
+            **Note:** The system automatically detects file types based on both the Content-Type header 
+            and file extension. the system will properly recognize Markdown files regardless of how the browser sends the Content-Type.
             
             **File Size Limit:** 100MB
             
@@ -60,9 +63,9 @@ public interface DocsSourceController {
             required = true,
             content = @Content(
                 mediaType = MediaType.MULTIPART_FORM_DATA_VALUE,
-                examples = @ExampleObject(
-                    name = "Upload a Markdown file",
-                    value = "(Use the file picker UI to attach a .md file)"
+                encoding = @io.swagger.v3.oas.annotations.media.Encoding(
+                    name = "file",
+                    contentType = "application/octet-stream"
                 )
             )
         )
@@ -151,8 +154,11 @@ public interface DocsSourceController {
         @ApiResponse(responseCode = "415", description = "Unsupported Media Type - invalid file format")
     })
     ResponseEntity<CommonResponse<SourceUploadResponse>> uploadFile(
-            @Parameter(description = "File to upload (PDF, Markdown, or plain text)", required = true)
-            @RequestParam("file") @NotNull MultipartFile file
+            @Parameter(
+                description = "File to upload (PDF, Markdown, or plain text)", 
+                required = true
+            )
+            @RequestParam("file") MultipartFile file
     );
 
     /**
