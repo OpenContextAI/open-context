@@ -25,7 +25,7 @@ public interface DocsSearchController {
     @GetMapping("/search")
     @Operation(
             summary = "Exploratory search (find_knowledge)",
-            description = "Returns top-k structured chunk summaries based on a natural language query. Snippet policy: first 50 chars + '...'."
+            description = "Returns top-k structured chunk summaries based on a natural language query. Default returns 50 results. Snippet policy: first 50 chars + '...'."
     )
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Search completed",
@@ -54,8 +54,8 @@ public interface DocsSearchController {
     ResponseEntity<CommonResponse<SearchResultsResponse>> search(
             @Parameter(description = "User search query", example = "Spring Security JWT filter configuration", required = true)
             @RequestParam String query,
-            @Parameter(description = "Max number of results", example = "5")
-            @RequestParam(defaultValue = "5") Integer topK);
+            @Parameter(description = "Max number of results", example = "50")
+            @RequestParam(defaultValue = "50") Integer topK);
 
     @PostMapping(value = "/get-content", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
