@@ -1,0 +1,10 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Test CSS to verify Tailwind is working */
+.test-tailwind {
+  @apply bg-red-500 text-white p-4 rounded-lg;
+}
