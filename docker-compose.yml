@@ -12,7 +12,6 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - opencontext-network
     healthcheck:
@@ -74,10 +73,10 @@ services:
       - opencontext-network
     environment:
       - OLLAMA_HOST=0.0.0.0
-      # - OLLAMA_GPU_OVERHEAD=0
-      # - OLLAMA_NUM_PARALLEL=1
+      - OLLAMA_NUM_PARALLEL=1
     depends_on:
       - ollama-init
+    runtime: nvidia
     restart: unless-stopped
 
   # Kibana for Elasticsearch management
@@ -123,7 +122,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - UNSTRUCTURED_MEMORY_FREE_MINIMUM_MB=512
+    - UNSTRUCTURED_MEMORY_FREE_MINIMUM_MB=512
     networks:
       - opencontext-network
     restart: unless-stopped
@@ -139,15 +138,6 @@ services:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/opencontext
-      - SPRING_DATASOURCE_USERNAME=user
-      - SPRING_DATASOURCE_PASSWORD=password
-      - ELASTICSEARCH_URL=http://elasticsearch:9200
-      - OLLAMA_BASE_URL=http://ollama:11434
-      - UNSTRUCTURED_API_URL=http://unstructured-api:8000
-      - MINIO_URL=http://minio:9000
-      - MINIO_ACCESS_KEY=minioadmin
-      - MINIO_SECRET_KEY=minioadmin123!
     depends_on:
       postgres:
         condition: service_healthy
@@ -199,6 +189,21 @@ services:
     networks:
       - opencontext-network
     command: ["node", "dist/index.js", "--transport", "http", "--port", "3000"]
+    restart: unless-stopped
+
+  # Admin UI Frontend
+  open-context-admin-ui:
+    build:
+      context: ./admin-ui
+      dockerfile: Dockerfile
+    image: opencontext/admin-ui:0.1.0
+    container_name: open-context-admin-ui
+    ports:
+      - "3001:80"
+    depends_on:
+      - open-context-core
+    networks:
+      - opencontext-network
     restart: unless-stopped
 
 volumes:
