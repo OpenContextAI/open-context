@@ -11,7 +11,6 @@ import {
   FileText, 
   ChevronRight,
   Copy,
-  ExternalLink,
   Loader2
 } from 'lucide-react'
 import type { SearchResultsResponse, GetContentResponse } from '../types/api'
@@ -268,30 +267,26 @@ export const Search: React.FC = () => {
               <div className="space-y-4">
                 {/* Content Metadata */}
                 <div className="bg-gray-50 p-4 rounded-lg">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                     <div>
                       <span className="font-medium text-gray-700">Chunk ID:</span>
-                      <div className="text-gray-600 font-mono text-xs">
-                        {contentData.chunkId}
+                      <div className="text-gray-600 font-mono text-xs break-all">
+                        {selectedChunk}
                       </div>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-700">File Type:</span>
-                      <div className="text-gray-600">{contentData.fileType}</div>
                     </div>
                     <div>
                       <span className="font-medium text-gray-700">Tokens:</span>
                       <div className="text-gray-600">
-                        {contentData.tokenInfo.tokenCount} / {maxTokens}
+                        {contentData.tokenInfo.actualTokens} / {maxTokens}
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Content Text */}
-                <div className="bg-white border rounded-lg p-4">
-                  <div className="prose max-w-none">
-                    <pre className="whitespace-pre-wrap text-sm text-gray-800 font-mono leading-relaxed">
+                <div className="bg-white border rounded-lg overflow-hidden">
+                  <div className="p-4 max-h-96 overflow-y-auto">
+                    <pre className="whitespace-pre-wrap text-sm text-gray-800 font-mono leading-relaxed overflow-hidden text-ellipsis" style={{ wordBreak: 'break-all', whiteSpace: 'pre-wrap' }}>
                       {contentData.content}
                     </pre>
                   </div>
@@ -301,12 +296,6 @@ export const Search: React.FC = () => {
                 <div className="flex justify-between items-center text-sm text-gray-600">
                   <div>
                     Content length: {contentData.content.length} characters
-                  </div>
-                  <div className="flex space-x-2">
-                    <Button variant="outline" size="sm">
-                      <ExternalLink className="h-4 w-4 mr-1" />
-                      View Source
-                    </Button>
                   </div>
                 </div>
               </div>
