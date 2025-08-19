@@ -189,8 +189,8 @@ export const Settings: React.FC = () => {
               <span className="ml-2 text-gray-600">{import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api/v1'}</span>
             </div>
             <div>
-              <span className="font-medium text-gray-700">Environment:</span>
-              <span className="ml-2 text-gray-600">{import.meta.env.MODE}</span>
+              <span className="font-medium text-gray-700">Deployment:</span>
+              <span className="ml-2 text-gray-600">Self-Hosted Instance</span>
             </div>
             <div>
               <span className="font-medium text-gray-700">Storage:</span>
