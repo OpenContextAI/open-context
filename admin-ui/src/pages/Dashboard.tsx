@@ -11,7 +11,6 @@ import {
   CheckCircle, 
   AlertCircle,
   Clock,
-  TrendingUp,
   Server,
   Search
 } from 'lucide-react'
@@ -29,7 +28,7 @@ export const Dashboard: React.FC = () => {
       apiKey: apiKey!
     }),
     enabled: !!apiKey,
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 5000, // Refetch every 5 seconds
   })
 
   // Calculate statistics from real data
@@ -39,9 +38,7 @@ export const Dashboard: React.FC = () => {
         totalDocuments: 0,
         completedDocuments: 0,
         processingDocuments: 0,
-        errorDocuments: 0,
-        totalChunks: 0, // TODO: Add chunk count API
-        indexedChunks: 0
+        errorDocuments: 0
       }
     }
 
@@ -57,9 +54,7 @@ export const Dashboard: React.FC = () => {
       totalDocuments,
       completedDocuments,
       processingDocuments,
-      errorDocuments,
-      totalChunks: 0, // TODO: Add chunk count API
-      indexedChunks: completedDocuments // Approximation
+      errorDocuments
     }
   }, [documentsPage?.content])
 
@@ -133,7 +128,7 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
@@ -199,38 +194,6 @@ export const Dashboard: React.FC = () => {
             </div>
             <p className="text-xs text-gray-600 mt-1">
               Need attention
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Total Chunks
-            </CardTitle>
-            <TrendingUp className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalChunks.toLocaleString()}</div>
-            <p className="text-xs text-gray-600 mt-1">
-              Knowledge segments
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-600">
-              Indexed
-            </CardTitle>
-            <Server className="h-4 w-4 text-purple-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600">
-              {stats.indexedChunks.toLocaleString()}
-            </div>
-            <p className="text-xs text-gray-600 mt-1">
-              Ready for search
             </p>
           </CardContent>
         </Card>
