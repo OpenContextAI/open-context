@@ -6,6 +6,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 
 import java.util.List;
 import java.util.UUID;
@@ -145,5 +148,8 @@ public interface DocumentChunkRepository extends JpaRepository<DocumentChunk, UU
      * @param sourceDocumentId the source document ID whose chunks should be deleted
      * @return the number of deleted chunks
      */
-    int deleteBySourceDocumentId(UUID sourceDocumentId);
+    @Modifying
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Query("DELETE FROM DocumentChunk dc WHERE dc.sourceDocumentId = :sourceDocumentId")
+    int deleteBySourceDocumentId(@Param("sourceDocumentId") UUID sourceDocumentId);
 }

@@ -15,6 +15,7 @@ import com.opencontext.service.DocumentParsingService;
 import com.opencontext.service.EmbeddingService;
 import com.opencontext.service.FileStorageService;
 import com.opencontext.service.IndexingService;
+import org.springframework.transaction.annotation.Propagation;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -295,7 +296,6 @@ public class SourceController implements DocsSourceController{
      * 문서 삭제 파이프라인을 비동기적으로 실행합니다.
      */
     @Async
-    @Transactional
     public void processDeletionPipeline(UUID documentId) {
         log.info("Starting deletion pipeline processing: documentId={}", documentId);
 
@@ -310,7 +310,6 @@ public class SourceController implements DocsSourceController{
             // 2. Delete chunks from PostgreSQL
             deleteChunksFromPostgreSQL(documentId);
             log.info("Deleted chunks from PostgreSQL: id={}", documentId);
-
             // 3. Delete document and file using FileStorageService
             fileStorageService.deleteDocument(documentId);
             log.info("Deleted document and file: id={}, path={}", documentId, fileStoragePath);
@@ -329,6 +328,7 @@ public class SourceController implements DocsSourceController{
     /**
      * Elasticsearch에서 문서 관련 청크들을 삭제합니다.
      */
+    @Transactional
     private void deleteFromElasticsearch(UUID documentId) {
         try {
             // 문서 ID로 쿼리하여 관련 청크들을 삭제
@@ -365,6 +365,7 @@ public class SourceController implements DocsSourceController{
     /**
      * PostgreSQL에서 문서 청크들을 삭제합니다.
      */
+    @Transactional
     private void deleteChunksFromPostgreSQL(UUID documentId) {
         try {
             int deletedCount = documentChunkRepository.deleteBySourceDocumentId(documentId);
