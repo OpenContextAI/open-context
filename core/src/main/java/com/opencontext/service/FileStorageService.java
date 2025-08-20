@@ -147,18 +147,31 @@ public class FileStorageService {
             // Generate unique object key
             String objectKey = generateObjectKey(file.getOriginalFilename());
 
-            // Upload file to MinIO
+            // Get file input stream and size
+            InputStream inputStream = file.getInputStream();
+            long fileSize = file.getSize();
+            
+            // Validate stream and size
+            if (fileSize <= 0) {
+                throw new BusinessException(ErrorCode.INVALID_REQUEST, "File size must be greater than 0");
+            }
+
+            // For files smaller than 5MB, use simple upload without multipart
+            // For larger files, use multipart upload with 5MB part size
+            long partSize = fileSize < 5 * 1024 * 1024 ? -1 : 5 * 1024 * 1024;
+
+            // Upload file to MinIO with proper stream handling
             PutObjectArgs putObjectArgs = PutObjectArgs.builder()
                     .bucket(minioConfig.getBucketName())
                     .object(objectKey)
-                    .stream(file.getInputStream(), file.getSize(), -1)
+                    .stream(inputStream, fileSize, partSize)
                     .contentType(resolvedContentType)
                     .build();
 
             minioClient.putObject(putObjectArgs);
             
-            log.debug("☁️ [MINIO] File uploaded to MinIO: {} -> bucket:{}, key:{}", 
-                    file.getOriginalFilename(), minioConfig.getBucketName(), objectKey);
+            log.debug("☁️ [MINIO] File uploaded to MinIO: {} -> bucket:{}, key:{}, size:{}, partSize:{}", 
+                    file.getOriginalFilename(), minioConfig.getBucketName(), objectKey, fileSize, partSize);
 
             return objectKey;
 
