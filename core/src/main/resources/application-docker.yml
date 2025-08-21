@@ -50,7 +50,7 @@ app:
   
   # Embedding Configuration
   embedding:
-    batch-size: 10
+    batch-size: 2  # 더 작은 배치로 안정성 우선
   
   # Search Configuration
   search:
@@ -94,6 +94,9 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+  health:
+      elasticsearch:
+        enabled: false
 
 # Logging Configuration
 logging:
