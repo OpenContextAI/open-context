@@ -26,7 +26,7 @@ OpenContext is an enterprise-grade RAG (Retrieval-Augmented Generation) system d
 - **Developer Friendly**: MCP protocol integration for AI assistants like Cursor
 
 ### Demo 
-[![demo](https://github.com/user-attachments/assets/55482003-4bb8-4316-bea7-200ecf5bf92a)](https://github.com/user-attachments/assets/55482003-4bb8-4316-bea7-200ecf5bf92ae)
+[![demo](https://github.com/user-attachments/assets/29162dfe-cb7c-45ac-b45d-f2cf51e534fb)](https://github.com/user-attachments/assets/55482003-4bb8-4316-bea7-200ecf5bf92a)
 
 ## Architecture
 
