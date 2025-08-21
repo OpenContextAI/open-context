@@ -27,7 +27,8 @@ React-based administration interface for OpenContext knowledge management system
 
 - Node.js 18+ 
 - npm or yarn
-- OpenContext backend running on localhost:8080
+- OpenContext backend running on localhost:8080 (for development)
+- Docker and Docker Compose (for production deployment)
 
 ### Setup
 
@@ -45,6 +46,21 @@ npm run build
 npm run preview
 ```
 
+### Docker Deployment
+
+The admin UI is containerized and automatically deployed with the full stack:
+
+```bash
+# Build and start all services (from project root)
+docker compose up -d
+
+# Build admin UI only
+docker compose build open-context-admin-ui
+
+# View logs
+docker compose logs -f open-context-admin-ui
+```
+
 ### Environment Variables
 
 ```bash
@@ -54,11 +70,22 @@ VITE_API_BASE_URL=http://localhost:8080/api/v1
 
 ## Usage
 
+### Development Mode
 1. Start the backend server (OpenContext Core)
-2. Run the frontend development server
+2. Run the frontend development server: `npm run dev`
 3. Navigate to http://localhost:5173
 4. Configure API key in Settings page
 5. Upload documents and test search functionality
+
+### Production Mode (Docker)
+1. Start all services: `docker compose up -d`
+2. Navigate to http://localhost:3001
+3. Configure API key in Settings page (default: `dev-api-key-123`)
+4. Upload documents and test search functionality
+
+### Port Information
+- **Development**: http://localhost:5173 (Vite dev server)
+- **Production**: http://localhost:3001 (Docker container)
 
 ## API Integration
 
