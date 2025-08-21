@@ -17,8 +17,8 @@ import org.springframework.web.client.RestTemplate;
 import java.util.*;
 
 /**
- * Elasticsearch 하이브리드 검색 서비스
- * BM25 키워드 검색과 벡터 유사도 검색을 결합하여 최적의 검색 결과 제공
+ * Elasticsearch hybrid search service
+ * Combines BM25 keyword search and vector similarity search to provide optimal search results
  */
 @Slf4j
 @Service
@@ -44,36 +44,36 @@ public class SearchService {
     private double vectorWeight;
 
     /**
-     * 하이브리드 검색 실행 - 키워드 검색과 의미 검색을 결합
+     * Execute hybrid search - combines keyword search and semantic search
      * 
-     * @param query 검색어
-     * @param topK 반환할 최대 결과 수
-     * @return 관련도 순으로 정렬된 검색 결과 목록
+     * @param query Search query
+     * @param topK Maximum number of results to return
+     * @return List of search results sorted by relevance
      */
     public List<SearchResultItem> search(String query, int topK) {
         long startTime = System.currentTimeMillis();
         
-        log.info("하이브리드 검색 시작: query='{}', topK={}", query, topK);
+        log.info("Starting hybrid search: query='{}', topK={}", query, topK);
 
         try {
-            // 1단계: 검색어를 임베딩 벡터로 변환 (float 타입으로 ES 호환성 확보)
+            // Step 1: Convert search query to embedding vector (float type for ES compatibility)
             List<Float> queryEmbedding = generateQueryEmbedding(query);
             
-            // 2단계: Elasticsearch 하이브리드 쿼리 실행
+            // Step 2: Execute Elasticsearch hybrid query
             Map<String, Object> searchResponse = executeElasticsearchQuery(query, queryEmbedding, topK);
             
-            // 3단계: 검색 결과를 DTO로 변환
+            // Step 3: Convert search results to DTO
             List<SearchResultItem> results = parseSearchResults(searchResponse); 
             
             long duration = System.currentTimeMillis() - startTime;
-            log.info("하이브리드 검색 완료: query='{}', 결과수={}, 소요시간={}ms", 
+            log.info("Hybrid search completed: query='{}', resultCount={}, duration={}ms", 
                     query, results.size(), duration);
             
             return results;
 
         } catch (Exception e) {
             long duration = System.currentTimeMillis() - startTime;
-            log.error("하이브리드 검색 실패: query='{}', 소요시간={}ms, 오류={}", 
+            log.error("Hybrid search failed: query='{}', duration={}ms, error={}", 
                     query, duration, e.getMessage(), e);
             throw new BusinessException(ErrorCode.ELASTICSEARCH_ERROR, 
                     "Search operation failed: " + e.getMessage());
@@ -81,38 +81,38 @@ public class SearchService {
     }
 
     /**
-     * 검색어를 임베딩 벡터로 변환
-     * ES cosineSimilarity 함수 호환을 위해 List<Float> 타입 사용
+     * Convert search query to embedding vector
+     * Uses List<Float> type for ES cosineSimilarity function compatibility
      */
     private List<Float> generateQueryEmbedding(String query) {
-        log.debug("쿼리 임베딩 생성: query='{}'", query);
+        log.debug("Generating query embedding: query='{}'", query);
         
         try {
             TextSegment textSegment = TextSegment.from(query);
             Embedding embedding = embeddingModel.embed(textSegment).content();
             
-            // float 배열을 List<Float>로 변환 (ES 호환성)
+            // Convert float array to List<Float> (ES compatibility)
             List<Float> embeddingVector = new ArrayList<>();
             float[] vector = embedding.vector();
             for (float value : vector) {
                 embeddingVector.add(value);
             }
             
-            log.debug("쿼리 임베딩 생성 완료: 차원수={}", embedding.dimension());
+            log.debug("Query embedding generation completed: dimensions={}", embedding.dimension());
             return embeddingVector;
             
         } catch (Exception e) {
-            log.error("쿼리 임베딩 생성 실패: query='{}', 오류={}", query, e.getMessage(), e);
+            log.error("Query embedding generation failed: query='{}', error={}", query, e.getMessage(), e);
             throw new BusinessException(ErrorCode.EMBEDDING_GENERATION_FAILED, 
                     "Failed to generate query embedding: " + e.getMessage());
         }
     }
 
     /**
-     * Elasticsearch에 하이브리드 검색 쿼리 실행
+     * Execute hybrid search query on Elasticsearch
      */
     private Map<String, Object> executeElasticsearchQuery(String query, List<Float> queryEmbedding, int topK) {
-        log.debug("Elasticsearch 쿼리 실행: topK={}", topK);
+        log.debug("Executing Elasticsearch query: topK={}", topK);
         
         try {
             Map<String, Object> searchQuery = buildHybridSearchQuery(query, queryEmbedding, topK);
@@ -132,23 +132,23 @@ public class SearchService {
                         "Empty response from Elasticsearch");
             }
             
-            log.debug("검색 쿼리 실행 성공");
+            log.debug("Search query execution successful");
             return responseBody;
             
         } catch (Exception e) {
-            log.error("검색 쿼리 실행 실패: 오류={}", e.getMessage(), e);
+            log.error("Search query execution failed: error={}", e.getMessage(), e);
             throw new BusinessException(ErrorCode.ELASTICSEARCH_ERROR, 
                     "Elasticsearch query execution failed: " + e.getMessage());
         }
     }
 
     /**
-     * BM25 키워드 검색과 벡터 유사도 검색을 결합한 하이브리드 쿼리 구성
-     * 각 쿼리를 나란히 배치하여 점수 정상 반영
+     * Build hybrid query combining BM25 keyword search and vector similarity search
+     * Place queries side by side to properly reflect scores
      */
     private Map<String, Object> buildHybridSearchQuery(String query, List<Float> queryEmbedding, int topK) {
         
-        // BM25 키워드 검색 쿼리 
+        // BM25 keyword search query 
         Map<String, Object> bm25Query = Map.of(
             "multi_match", Map.of(
                 "query", query,
@@ -159,7 +159,7 @@ public class SearchService {
             )
         );
         
-        // 벡터 유사도 검색 쿼리 (가중치를 스크립트 내부에서 적용)
+        // Vector similarity search query (apply weight inside script)
         Map<String, Object> vectorQuery = Map.of(
             "script_score", Map.of(
                 "query", Map.of("match_all", Map.of()),
@@ -173,14 +173,14 @@ public class SearchService {
             )
         );
         
-        // 하이브리드 쿼리 (bool.should에 두 쿼리를 나란히 배치)
+        // Hybrid query (place two queries side by side in bool.should)
         Map<String, Object> hybridQuery = Map.of(
             "bool", Map.of(
                 "should", Arrays.asList(bm25Query, vectorQuery)
             )
         );
         
-        // 최종 검색 쿼리 
+        // Final search query 
         return Map.of(
             "size", topK,
             "query", hybridQuery,
@@ -195,26 +195,26 @@ public class SearchService {
     }
 
     /**
-     * Elasticsearch 응답을 SearchResultItem 목록으로 변환
-     * 응답 내 최대 점수 대비 상대적 정규화 적용
+     * Convert Elasticsearch response to SearchResultItem list
+     * Apply relative normalization against maximum score in response
      */
     private List<SearchResultItem> parseSearchResults(Map<String, Object> response) {
-        log.debug("검색 결과 파싱 중");
+        log.debug("Parsing search results");
         
         try {
             Map<String, Object> hits = (Map<String, Object>) response.get("hits");
             if (hits == null) {
-                log.warn("Elasticsearch 응답에 'hits' 필드가 없음");
+                log.warn("Elasticsearch response missing 'hits' field");
                 return Collections.emptyList();
             }
             
             List<Map<String, Object>> hitList = (List<Map<String, Object>>) hits.get("hits");
             if (hitList == null || hitList.isEmpty()) {
-                log.info("검색 결과가 없음");
+                log.info("No search results found");
                 return Collections.emptyList();
             }
             
-            // 응답 내 최대 점수 계산 (상대적 정규화를 위함)
+            // Calculate maximum score in response (for relative normalization)
             double maxScore = hitList.stream()
                     .mapToDouble(hit -> ((Number) hit.get("_score")).doubleValue())
                     .max()
@@ -229,23 +229,23 @@ public class SearchService {
                         results.add(item);
                     }
                 } catch (Exception e) {
-                    log.warn("검색 결과 파싱 실패, 건너뛰기: {}", e.getMessage());
-                    // 개별 hit 파싱 실패는 전체 검색을 중단하지 않음
+                    log.warn("Search result parsing failed, skipping: {}", e.getMessage());
+                    // Individual hit parsing failure does not stop the entire search
                 }
             }
             
-            log.debug("검색 결과 파싱 완료: 결과수={}", results.size());
+            log.debug("Search result parsing completed: resultCount={}", results.size());
             return results;
             
         } catch (Exception e) {
-            log.error("검색 결과 파싱 실패: 오류={}", e.getMessage(), e);
+            log.error("Search result parsing failed: error={}", e.getMessage(), e);
             throw new BusinessException(ErrorCode.ELASTICSEARCH_ERROR, 
                     "Failed to parse search results: " + e.getMessage());
         }
     }
 
     /**
-     * 개별 검색 결과를 SearchResultItem으로 변환
+     * Convert individual search result to SearchResultItem
      */
     private SearchResultItem parseSearchHit(Map<String, Object> hit, double maxScore) {
         Map<String, Object> source = (Map<String, Object>) hit.get("_source");
@@ -253,30 +253,30 @@ public class SearchService {
             return null;
         }
         
-        // PRD 스키마에 따른 필드 추출
+        // Extract fields according to PRD schema
         String chunkId = (String) source.get("chunkId");
         String content = (String) source.get("content");
         Double score = ((Number) hit.get("_score")).doubleValue();
         
-        // PRD 스키마: title은 metadata.title에 위치
+        // PRD schema: title is located in metadata.title
         String title = extractTitle(source);
         
-        // PRD 정책에 따른 스니펫 생성
+        // Generate snippet according to PRD policy
         String snippet = generateSnippet(content);
         
-        // 응답 내 최대 점수 대비 상대적 정규화
+        // Relative normalization against maximum score in response
         double relevanceScore = normalizeScore(score, maxScore);
         
         return SearchResultItem.builder()
                 .chunkId(chunkId)
-                .title(title != null ? title : "제목 없음")
+                .title(title != null ? title : "No Title")
                 .snippet(snippet)
                 .relevanceScore(relevanceScore)
                 .build();
     }
 
     /**
-     * 스키마에서 제목 추출 (metadata.title)
+     * Extract title from schema (metadata.title)
      */
     private String extractTitle(Map<String, Object> source) {
         Map<String, Object> metadata = (Map<String, Object>) source.get("metadata");
@@ -287,14 +287,14 @@ public class SearchService {
     }
 
     /**
-     * 스니펫 생성
-     * - 기본 길이: 50자
-     * - 50자 초과 시: 앞 50자 + "..." (항상 추가)
-     * - 50자 미만 시: 원본 그대로 (... 생략)
+     * Generate snippet
+     * - Default length: 50 characters
+     * - If over 50 characters: first 50 characters + "..." (always added)
+     * - If under 50 characters: original as-is (no ...)
      */
     private String generateSnippet(String content) {
         if (content == null || content.trim().isEmpty()) {
-            return "내용이 없습니다";
+            return "No content available";
         }
         
         String cleanContent = content.trim();
@@ -307,7 +307,7 @@ public class SearchService {
     }
 
     /**
-     * 점수 정규화 - 응답 내 최대 점수 대비 상대적 비율로 계산
+     * Score normalization - calculate relative ratio against maximum score in response
      */
     private double normalizeScore(double score, double maxScore) {
         if (maxScore <= 0) {

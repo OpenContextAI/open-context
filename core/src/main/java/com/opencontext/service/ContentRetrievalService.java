@@ -15,8 +15,8 @@ import org.springframework.web.client.RestTemplate;
 import java.util.Map;
 
 /**
- * 청크 콘텐츠 조회 및 토큰 제한 처리 서비스
- * PRD 명세에 따라 tiktoken-cl100k_base 토크나이저 기준으로 토큰 제한 적용
+ * Service for retrieving chunk content and applying token limits
+ * Applies token limits based on tiktoken-cl100k_base tokenizer according to PRD specifications
  */
 @Slf4j
 @Service
@@ -38,37 +38,37 @@ public class ContentRetrievalService {
     private String tokenizerName;
 
     /**
-     * 단일 청크의 전체 콘텐츠를 조회하고 토큰 제한을 적용
+     * Retrieves the complete content of a single chunk and applies token limits
      * 
-     * @param chunkId 조회할 청크 ID
-     * @param maxTokens 최대 토큰 수 (null인 경우 기본값 사용)
-     * @return 토큰 제한이 적용된 콘텐츠와 토큰 정보
+     * @param chunkId Chunk ID to retrieve
+     * @param maxTokens Maximum token count (uses default if null)
+     * @return Content with token limits applied and token information
      */
     public GetContentResponse getContent(String chunkId, Integer maxTokens) {
         long startTime = System.currentTimeMillis();
         
         int effectiveMaxTokens = maxTokens != null ? maxTokens : defaultMaxTokens;
         
-        log.info("청크 콘텐츠 조회 시작: chunkId={}, maxTokens={}", chunkId, effectiveMaxTokens);
+        log.info("Starting chunk content retrieval: chunkId={}, maxTokens={}", chunkId, effectiveMaxTokens);
 
         try {
-            // 1단계: Elasticsearch에서 청크 내용 조회
+            // Step 1: Retrieve chunk content from Elasticsearch
             String content = fetchChunkContent(chunkId);
             
-            // 2단계: 토큰 제한 적용
+            // Step 2: Apply token limits
             GetContentResponse response = applyTokenLimit(content, effectiveMaxTokens);
             
             long duration = System.currentTimeMillis() - startTime;
-            log.info("청크 콘텐츠 조회 완료: chunkId={}, 원본길이={}, 토큰수={}, 소요시간={}ms",
+            log.info("Chunk content retrieval completed: chunkId={}, originalLength={}, tokenCount={}, duration={}ms",
                     chunkId, content.length(), response.getTokenInfo().getActualTokens(), duration);
             
             return response;
 
         } catch (BusinessException e) {
-            throw e; // 비즈니스 예외는 그대로 전파
+            throw e; // Propagate business exceptions as-is
         } catch (Exception e) {
             long duration = System.currentTimeMillis() - startTime;
-            log.error("청크 콘텐츠 조회 실패: chunkId={}, 소요시간={}ms, 오류={}", 
+            log.error("Chunk content retrieval failed: chunkId={}, duration={}ms, error={}", 
                     chunkId, duration, e.getMessage(), e);
             throw new BusinessException(ErrorCode.ELASTICSEARCH_ERROR, 
                     "Content retrieval failed: " + e.getMessage());
@@ -76,15 +76,15 @@ public class ContentRetrievalService {
     }
 
     /**
-     * Elasticsearch에서 특정 청크의 콘텐츠 조회
+     * Retrieves content of a specific chunk from Elasticsearch
      */
     private String fetchChunkContent(String chunkId) {
-        log.debug("Elasticsearch에서 청크 조회: chunkId={}", chunkId);
+        log.debug("Retrieving chunk from Elasticsearch: chunkId={}", chunkId);
         
         try {
             String getUrl = elasticsearchUrl + "/" + indexName + "/_doc/" + chunkId;
             
-            // _source 필터를 사용하여 content 필드만 조회 (성능 최적화)
+            // Use _source filter to retrieve only content field (performance optimization)
             String getUrlWithSource = getUrl + "?_source=content";
             
             ResponseEntity<Map> response = restTemplate.getForEntity(getUrlWithSource, Map.class);
@@ -105,7 +105,7 @@ public class ContentRetrievalService {
                         "Chunk not found: " + chunkId);
             }
             
-            // _source에서 content 추출
+            // Extract content from _source
             Map<String, Object> source = (Map<String, Object>) responseBody.get("_source");
             if (source == null) {
                 throw new BusinessException(ErrorCode.ELASTICSEARCH_ERROR, 
@@ -118,73 +118,73 @@ public class ContentRetrievalService {
                         "Content field is null for chunk: " + chunkId);
             }
             
-            log.debug("청크 콘텐츠 조회 성공: chunkId={}, 길이={}", chunkId, content.length());
+            log.debug("Chunk content retrieval successful: chunkId={}, length={}", chunkId, content.length());
             return content;
             
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Elasticsearch 청크 조회 실패: chunkId={}, 오류={}", chunkId, e.getMessage(), e);
+            log.error("Elasticsearch chunk retrieval failed: chunkId={}, error={}", chunkId, e.getMessage(), e);
             throw new BusinessException(ErrorCode.ELASTICSEARCH_ERROR, 
                     "Failed to fetch chunk from Elasticsearch: " + e.getMessage());
         }
     }
 
     /**
-     * 콘텐츠에 토큰 제한을 적용하고 응답 DTO 생성
-     * PRD 정책: maxTokens 초과 시 텍스트 끝부분을 잘라냄 (앞부분 우선 보존)
+     * Applies token limits to content and creates response DTO
+     * PRD policy: Truncate text from the end when maxTokens is exceeded (preserve beginning priority)
      */
     private GetContentResponse applyTokenLimit(String content, int maxTokens) {
-        log.debug("토큰 제한 적용: 원본길이={}, maxTokens={}", content.length(), maxTokens);
+        log.debug("Applying token limit: originalLength={}, maxTokens={}", content.length(), maxTokens);
         
         try {
-            // 현재 콘텐츠의 토큰 수 계산
+            // Calculate current token count of content
             int currentTokens = calculateTokenCount(content);
             
             String finalContent = content;
             int actualTokens = currentTokens;
             
-            // 토큰 수가 제한을 초과하는 경우 텍스트 끝부분을 잘라냄
+            // Truncate text from the end if token count exceeds limit
             if (currentTokens > maxTokens) {
-                log.debug("토큰 제한 초과, 텍스트 자르기: 현재토큰={}, 제한토큰={}", currentTokens, maxTokens);
+                log.debug("Token limit exceeded, truncating text: currentTokens={}, limitTokens={}", currentTokens, maxTokens);
                 
                 finalContent = truncateContentByTokens(content, maxTokens);
                 actualTokens = calculateTokenCount(finalContent);
                 
-                log.debug("텍스트 자르기 완료: 최종길이={}, 최종토큰={}", finalContent.length(), actualTokens);
+                log.debug("Text truncation completed: finalLength={}, finalTokens={}", finalContent.length(), actualTokens);
             }
             
-            // 토큰 정보 생성
+            // Create token information
             TokenInfo tokenInfo = TokenInfo.builder()
                     .tokenizer(tokenizerName)
                     .actualTokens(actualTokens)
                     .build();
             
-            // 응답 DTO 생성
+            // Create response DTO
             return GetContentResponse.builder()
                     .content(finalContent)
                     .tokenInfo(tokenInfo)
                     .build();
             
         } catch (Exception e) {
-            log.error("토큰 제한 적용 실패: 오류={}", e.getMessage(), e);
+            log.error("Token limit application failed: error={}", e.getMessage(), e);
             throw new BusinessException(ErrorCode.ELASTICSEARCH_ERROR, 
                     "Token limit processing failed: " + e.getMessage());
         }
     }
 
     /**
-     * tiktoken-cl100k_base 토크나이저 기준으로 토큰 수 계산
-     * 간단한 근사치 계산 (정확한 구현을 위해서는 실제 tiktoken 라이브러리 필요)
+     * Calculate token count based on tiktoken-cl100k_base tokenizer
+     * Simple approximation (actual tiktoken library needed for accurate implementation)
      */
     private int calculateTokenCount(String text) {
         if (text == null || text.isEmpty()) {
             return 0;
         }
         
-        // 간단한 토큰 수 근사 계산
-        // 실제로는 tiktoken Java 바인딩이나 외부 API를 사용해야 함
-        // 현재는 영어 기준 평균 4글자 = 1토큰, 한글 기준 1.5글자 = 1토큰으로 근사
+        // Simple token count approximation
+        // Actually need tiktoken Java binding or external API
+        // Currently approximates: English average 4 chars = 1 token, Korean 1.5 chars = 1 token
         
         int englishChars = 0;
         int koreanChars = 0;
@@ -193,7 +193,7 @@ public class ContentRetrievalService {
         for (char c : text.toCharArray()) {
             if (c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9' || c == ' ') {
                 englishChars++;
-            } else if (c >= 0xAC00 && c <= 0xD7AF) { // 한글 범위
+            } else if (c >= 0xAC00 && c <= 0xD7AF) { // Korean range
                 koreanChars++;
             } else {
                 otherChars++;
@@ -204,19 +204,19 @@ public class ContentRetrievalService {
                              (int) Math.ceil(koreanChars / 1.5) + 
                              (int) Math.ceil(otherChars / 2.0);
         
-        return Math.max(estimatedTokens, 1); // 최소 1토큰
+        return Math.max(estimatedTokens, 1); // Minimum 1 token
     }
 
     /**
-     * 토큰 수 기준으로 텍스트를 잘라냄 (앞부분 우선 보존)
-     * PRD 정책: 텍스트 끝부분부터 제거하여 앞부분의 중요한 내용 보존
+     * Truncate text based on token count (preserve beginning priority)
+     * PRD policy: Remove from text end to preserve important content at beginning
      */
     private String truncateContentByTokens(String content, int maxTokens) {
         if (content == null || content.isEmpty()) {
             return content;
         }
         
-        // 이진 탐색을 사용하여 적절한 자르기 지점 찾기
+        // Use binary search to find the appropriate truncation point
         int left = 0;
         int right = content.length();
         String result = content;

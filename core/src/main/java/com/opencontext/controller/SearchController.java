@@ -16,8 +16,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * MCP 검색 API 컨트롤러
- * find_knowledge와 get_content MCP 도구를 위한 엔드포인트 제공
+ * MCP Search API Controller
+ * Provides endpoints for find_knowledge and get_content MCP tools
  */
 @Slf4j
 @RestController
@@ -29,7 +29,7 @@ public class SearchController implements DocsSearchController {
     private final ContentRetrievalService contentRetrievalService;
 
     /**
-     * 하이브리드 검색 수행 - find_knowledge MCP 도구
+     * Performs hybrid search - find_knowledge MCP tool
      */
     @Override
     @GetMapping("/search")
@@ -37,7 +37,7 @@ public class SearchController implements DocsSearchController {
             @RequestParam String query,
             @RequestParam(defaultValue = "50") Integer topK) {
         
-        log.info("검색 요청: query='{}', topK={}", query, topK);
+        log.info("Search request: query='{}', topK={}", query, topK);
         
         if (query == null || query.trim().isEmpty()) {
             return ResponseEntity.badRequest()
@@ -52,7 +52,7 @@ public class SearchController implements DocsSearchController {
     }
 
     /**
-     * 청크 콘텐츠 조회 - get_content MCP 도구
+     * Retrieves chunk content - get_content MCP tool
      */
     @Override
     @PostMapping(value = "/get-content", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -67,7 +67,7 @@ public class SearchController implements DocsSearchController {
             return ResponseEntity.badRequest()
                     .body(CommonResponse.error("maxTokens must be positive", "VALIDATION_FAILED"));
         }
-        log.info("콘텐츠 조회 요청: chunkId={}, maxTokens={}", chunkId, maxTokens);
+        log.info("Content retrieval request: chunkId={}, maxTokens={}", chunkId, maxTokens);
         GetContentResponse response = contentRetrievalService.getContent(chunkId, maxTokens);
         return ResponseEntity.ok(CommonResponse.success(response, "Content retrieved successfully"));
     }
