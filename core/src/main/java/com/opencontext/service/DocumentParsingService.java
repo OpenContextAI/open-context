@@ -44,7 +44,7 @@ public class DocumentParsingService {
      */
     public List<Map<String, Object>> parseDocument(UUID documentId) {
         long startTime = System.currentTimeMillis();
-        log.info("📝 [PARSING] Starting document parsing: documentId={}", documentId);
+        log.info("[PARSING] Starting document parsing: documentId={}", documentId);
 
         log.debug("📖 [PARSING] Step 1/3: Retrieving document metadata: documentId={}", documentId);
         SourceDocument document = fileStorageService.getDocument(documentId);
@@ -52,14 +52,14 @@ public class DocumentParsingService {
         String fileType = document.getFileType();
         long fileSize = document.getFileSize();
         
-        log.info("✅ [PARSING] Document metadata retrieved: filename={}, fileType={}, size={} bytes", 
+        log.info("[PARSING] Document metadata retrieved: filename={}, fileType={}, size={} bytes", 
                 filename, fileType, fileSize);
 
         try {
             // Step 2: Download file from MinIO
-            log.debug("☁️ [PARSING] Step 2/3: Downloading file from MinIO: path={}", document.getFileStoragePath());
+            log.debug("[PARSING] Step 2/3: Downloading file from MinIO: path={}", document.getFileStoragePath());
             InputStream fileStream = fileStorageService.downloadFile(document.getFileStoragePath());
-            log.info("✅ [PARSING] File downloaded from storage: filename={}, path={}", 
+            log.info("[PARSING] File downloaded from storage: filename={}, path={}", 
                     filename, document.getFileStoragePath());
             
             // Step 3: Call Unstructured API
@@ -78,7 +78,7 @@ public class DocumentParsingService {
 
         } catch (Exception e) {
             long duration = System.currentTimeMillis() - startTime;
-            log.error("❌ [PARSING] Document parsing failed: documentId={}, filename={}, duration={}ms, error={}", 
+            log.error("[PARSING] Document parsing failed: documentId={}, filename={}, duration={}ms, error={}", 
                     documentId, filename, duration, e.getMessage(), e);
             throw new BusinessException(ErrorCode.DOCUMENT_PARSING_FAILED, 
                     "Document parsing failed: " + e.getMessage());
@@ -112,12 +112,12 @@ public class DocumentParsingService {
             body.add("extract_images_in_pdf", "false");
             body.add("infer_table_structure", "true");
             
-            log.debug("⚙️ [UNSTRUCTURED-API] Request parameters: strategy=auto, coordinates=true, extract_images_in_pdf=false, infer_table_structure=true");
+            log.debug("[UNSTRUCTURED-API] Request parameters: strategy=auto, coordinates=true, extract_images_in_pdf=false, infer_table_structure=true");
 
             HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
 
             // Call API
-            log.debug("🚀 [UNSTRUCTURED-API] Sending HTTP request: {}/general/v0/general", unstructuredApiUrl);
+            log.debug("[UNSTRUCTURED-API] Sending HTTP request: {}/general/v0/general", unstructuredApiUrl);
             ResponseEntity<List<Map<String, Object>>> response = restTemplate.exchange(
                     unstructuredApiUrl + "/general/v0/general",
                     HttpMethod.POST,
@@ -128,7 +128,7 @@ public class DocumentParsingService {
             long apiDuration = System.currentTimeMillis() - apiStartTime;
             
             if (response.getStatusCode() != HttpStatus.OK || response.getBody() == null) {
-                log.error("❌ [UNSTRUCTURED-API] API returned unexpected response: filename={}, status={}, duration={}ms", 
+                log.error("[UNSTRUCTURED-API] API returned unexpected response: filename={}, status={}, duration={}ms", 
                         filename, response.getStatusCode(), apiDuration);
                 throw new BusinessException(ErrorCode.EXTERNAL_API_ERROR, 
                         "Unstructured API returned unexpected response");
@@ -137,7 +137,7 @@ public class DocumentParsingService {
             List<Map<String, Object>> elements = response.getBody();
             int elementCount = elements.size();
             
-            log.info("✅ [UNSTRUCTURED-API] API call successful: filename={}, elements={}, duration={}ms, status={}", 
+            log.info("[UNSTRUCTURED-API] API call successful: filename={}, elements={}, duration={}ms, status={}", 
                     filename, elementCount, apiDuration, response.getStatusCode());
             
             if (elementCount > 0) {
@@ -152,7 +152,7 @@ public class DocumentParsingService {
 
         } catch (Exception e) {
             long apiDuration = System.currentTimeMillis() - apiStartTime;
-            log.error("❌ [UNSTRUCTURED-API] API call failed: filename={}, duration={}ms, error={}", 
+            log.error("[UNSTRUCTURED-API] API call failed: filename={}, duration={}ms, error={}", 
                     filename, apiDuration, e.getMessage(), e);
             throw new BusinessException(ErrorCode.EXTERNAL_API_ERROR, 
                     "Failed to call Unstructured API: " + e.getMessage());

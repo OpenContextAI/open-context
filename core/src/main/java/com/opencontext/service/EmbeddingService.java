@@ -79,7 +79,7 @@ public class EmbeddingService {
             processedChunks += batch.size();
             long batchDuration = System.currentTimeMillis() - batchStartTime;
             
-            log.info("✅ [EMBEDDING] Batch {}/{} completed: processed={}/{}, duration={}ms", 
+            log.info("[EMBEDDING] Batch {}/{} completed: processed={}/{}, duration={}ms", 
                     currentBatch, batchCount, processedChunks, totalChunks, batchDuration);
         }
 
@@ -118,13 +118,13 @@ public class EmbeddingService {
             }
 
             // Generate batch embeddings using LangChain4j
-            log.debug("🚀 [LANGCHAIN4J] Calling Ollama embedding model: segments={}", textSegments.size());
+            log.debug("[LANGCHAIN4J] Calling Ollama embedding model: segments={}", textSegments.size());
             long embeddingStartTime = System.currentTimeMillis();
             Response<List<Embedding>> response = embeddingModel.embedAll(textSegments);
             List<Embedding> embeddings = response.content();
             long embeddingDuration = System.currentTimeMillis() - embeddingStartTime;
             
-            log.info("✅ [LANGCHAIN4J] Ollama embedding completed: segments={}, duration={}ms, vectorDimension={}", 
+            log.info("[LANGCHAIN4J] Ollama embedding completed: segments={}, duration={}ms, vectorDimension={}", 
                     textSegments.size(), embeddingDuration, 
                     embeddings.size() > 0 ? embeddings.get(0).dimension() : 0);
 
@@ -155,17 +155,17 @@ public class EmbeddingService {
                 
                 result.add(embeddedChunk);
                 
-                log.debug("✅ [LANGCHAIN4J] Embedding processed for chunk: id={}, vectorSize={}, textLength={}", 
+                log.debug("[LANGCHAIN4J] Embedding processed for chunk: id={}, vectorSize={}, textLength={}", 
                         chunk.getChunkId(), embedding.dimension(), chunk.getContent().length());
             }
 
             long batchDuration = System.currentTimeMillis() - batchStartTime;
-            log.info("✅ [LANGCHAIN4J] Batch processing completed: processed={}, duration={}ms, avgPerChunk={}ms", 
+            log.info("[LANGCHAIN4J] Batch processing completed: processed={}, duration={}ms, avgPerChunk={}ms", 
                     result.size(), batchDuration, batchDuration / batch.size());
 
         } catch (Exception e) {
             long batchDuration = System.currentTimeMillis() - batchStartTime;
-            log.error("❌ [LANGCHAIN4J] Batch processing failed: chunks={}, duration={}ms, error={}", 
+            log.error("[LANGCHAIN4J] Batch processing failed: chunks={}, duration={}ms, error={}", 
                     batch.size(), batchDuration, e.getMessage(), e);
             throw new BusinessException(ErrorCode.EMBEDDING_GENERATION_FAILED, 
                     "Failed to generate embeddings: " + e.getMessage());
@@ -181,7 +181,7 @@ public class EmbeddingService {
     private String prepareTextForEmbedding(StructuredChunk chunk) {
         StringBuilder text = new StringBuilder();
         
-        log.debug("📝 [EMBEDDING] Preparing text for embedding: chunkId={}", chunk.getChunkId());
+        log.debug("[EMBEDDING] Preparing text for embedding: chunkId={}", chunk.getChunkId());
 
         // Add title if exists
         if (chunk.getTitle() != null && !chunk.getTitle().trim().isEmpty()) {
@@ -193,7 +193,7 @@ public class EmbeddingService {
 
         String finalText = text.toString().trim();
         
-        log.debug("✅ [EMBEDDING] Text prepared: chunkId={}, finalLength={}, hasTitle={}", 
+        log.debug("[EMBEDDING] Text prepared: chunkId={}, finalLength={}, hasTitle={}", 
                 chunk.getChunkId(), finalText.length(), chunk.getTitle() != null);
         
         return finalText;

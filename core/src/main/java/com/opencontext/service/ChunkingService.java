@@ -47,7 +47,7 @@ public class ChunkingService {
             }
             
             if (text == null || text.trim().isEmpty()) {
-                log.debug("⚠️ [CHUNKING] Skipping empty element: type={}", elementType);
+                log.debug("[CHUNKING] Skipping empty element: type={}", elementType);
                 continue;
             }
 
@@ -59,7 +59,7 @@ public class ChunkingService {
             boolean isH1Header = isH1MarkdownHeader(text);
             
             if (isUnstructuredTitle || isH1Header) {
-                log.debug("🏷️ [CHUNKING] Detected H1 title/header: text='{}', elementType='{}', isUnstructuredTitle={}, isH1Header={}", 
+                log.debug("[CHUNKING] Detected H1 title/header: text='{}', elementType='{}', isUnstructuredTitle={}, isH1Header={}", 
                         text, elementType, isUnstructuredTitle, isH1Header);
                 // Save previous chunk if exists
                 if (currentChunkContent.length() > 0 && currentTitle != null) {
@@ -85,7 +85,7 @@ public class ChunkingService {
                 // Determine Title level (H1 is level 1)
                 currentTitleLevel = 1;
                 
-                log.info("🏷️ [CHUNKING] Starting new H1 chunk with title: '{}' (level: {})", 
+                log.info("[CHUNKING] Starting new H1 chunk with title: '{}' (level: {})", 
                         currentTitle, currentTitleLevel);
             } else {
                 // Elements without Title are considered as first elements and added to currentChunkContent
@@ -136,7 +136,7 @@ public class ChunkingService {
                     if (currentTitle == null && !currentChunkElements.isEmpty()) {
                         currentTitle = "Document Start Section";
                         currentTitleLevel = 1;
-                        log.info("🏷️ [CHUNKING] Setting default title for document start");
+                        log.info("[CHUNKING] Setting default title for document start");
                     }
                 }
             }
@@ -274,11 +274,11 @@ public class ChunkingService {
             
             // Exclude JavaScript keywords or console.log etc.
             if (headerText.matches("^(console\\.|function\\s|var\\s|let\\s|const\\s|if\\s*\\(|for\\s*\\(|while\\s*\\(|switch\\s*\\(|class\\s|return\\s|break\\s*;|continue\\s*;).*")) {
-                log.debug("❌ [CHUNKING] Excluding JavaScript code from H1 header: '{}'", headerText);
+                log.debug("[CHUNKING] Excluding JavaScript code from H1 header: '{}'", headerText);
                 return false;
             }
             
-            log.debug("✅ [CHUNKING] Valid H1 header detected: '{}'", headerText);
+            log.debug("[CHUNKING] Valid H1 header detected: '{}'", headerText);
             return true;
         }
         
