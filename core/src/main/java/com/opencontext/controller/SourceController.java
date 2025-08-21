@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * 소스 문서 관리를 위한 REST API 컨트롤러.
+ * REST API controller for managing source documents.
  * 
  * REST API controller for managing source documents.
  *
@@ -63,10 +63,10 @@ public class SourceController implements DocsSourceController{
     private String indexName;
 
     /**
-     * 파일 업로드 및 수집 파이프라인 시작
+     * File upload and ingestion pipeline start
      * 
-     * @param file 업로드할 파일 (multipart/form-data)
-     * @return 업로드 결과 및 문서 정보
+     * @param file File to upload (multipart/form-data)
+     * @return Upload result and document information
      */
     @Override
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -75,15 +75,15 @@ public class SourceController implements DocsSourceController{
         log.info("File upload requested: filename={}, size={}", file.getOriginalFilename(), file.getSize());
 
         try {
-            // 파일 저장 및 문서 생성 (FileStorageService에서 검증 수행)
+            // File storage and document creation (validation performed in FileStorageService)
             SourceDocument sourceDocument = fileStorageService.uploadFileWithMetadata(file);
             log.info("File saved successfully: documentId={}, filename={}", 
                     sourceDocument.getId(), sourceDocument.getOriginalFilename());
 
-            // 비동기 수집 파이프라인 시작
+            // Start asynchronous ingestion pipeline
             processIngestionPipeline(sourceDocument.getId());
             
-            // 응답 생성
+            // Create response
             SourceUploadResponse response = SourceUploadResponse.success(
                     sourceDocument.getId().toString(), 
                     sourceDocument.getOriginalFilename()
@@ -99,17 +99,17 @@ public class SourceController implements DocsSourceController{
         } catch (Exception e) {
             log.error("Unexpected error during file upload", e);
             return ResponseEntity.internalServerError()
-                    .body(CommonResponse.error("파일 업로드 중 오류가 발생했습니다: " + e.getMessage()));
+                    .body(CommonResponse.error("An error occurred during file upload: " + e.getMessage()));
         }
     }
 
     /**
-     * 업로드된 모든 문서의 최신 상태 목록 조회
+     * Retrieve latest status list of all uploaded documents
      * 
-     * @param page 페이지 번호 (0부터 시작)
-     * @param size 페이지 크기
-     * @param sort 정렬 조건
-     * @return 페이지네이션된 문서 목록
+     * @param page Page number (starting from 0)
+     * @param size Page size
+     * @param sort Sorting criteria
+     * @return Paginated document list
      */
     @Override
     @GetMapping
@@ -120,14 +120,14 @@ public class SourceController implements DocsSourceController{
         log.debug("Getting source documents: page={}, size={}, sort={}", page, size, sort);
 
         try {
-            // 정렬 조건 파싱
+            // Parse sorting criteria
             Sort sortObj = parseSort(sort);
             Pageable pageable = PageRequest.of(page, size, sortObj);
             
-            // 문서 목록 조회
+            // Retrieve document list
             Page<SourceDocument> documentPage = sourceDocumentRepository.findAll(pageable);
             
-            // DTO 변환
+            // Convert to DTO
             List<SourceDocumentDto> documentDtos = documentPage.getContent().stream()
                     .map(this::convertToDto)
                     .toList();
@@ -149,15 +149,15 @@ public class SourceController implements DocsSourceController{
         } catch (Exception e) {
             log.error("Failed to get source documents", e);
             return ResponseEntity.internalServerError()
-                    .body(CommonResponse.error("문서 목록 조회 중 오류가 발생했습니다: " + e.getMessage()));
+                    .body(CommonResponse.error("An error occurred while retrieving document list: " + e.getMessage()));
         }
     }
 
     /**
-     * 특정 문서를 강제로 재수집
+     * Force re-ingestion of a specific document
      * 
-     * @param sourceId 재수집할 문서 ID
-     * @return 재수집 시작 응답
+     * @param sourceId Document ID to re-ingest
+     * @return Re-ingestion start response
      */
     @Override
     @PostMapping("/{sourceId}/resync")
@@ -165,27 +165,27 @@ public class SourceController implements DocsSourceController{
         log.info("Document resync requested: sourceId={}", sourceId);
 
         try {
-            // 문서 존재 확인
+            // Check if document exists
             SourceDocument sourceDocument = findSourceDocumentById(sourceId);
             
-            // 처리 중인 문서인지 확인
+            // Check if document is being processed
             if (sourceDocument.isProcessing()) {
                 throw new BusinessException(ErrorCode.RESOURCE_IS_BEING_PROCESSED, 
-                        "문서가 이미 처리 중입니다.");
+                        "Document is already being processed.");
             }
             
-            // 상태를 PENDING으로 초기화
+            // Reset status to PENDING
             sourceDocument.updateIngestionStatus(IngestionStatus.PENDING);
             sourceDocument.clearErrorMessage();
             sourceDocumentRepository.save(sourceDocument);
             
-            // 비동기 수집 파이프라인 시작
+            // Start asynchronous ingestion pipeline
             processIngestionPipeline(sourceId);
             
             log.info("Document resync started successfully: sourceId={}", sourceId);
             
             return ResponseEntity.status(HttpStatus.ACCEPTED)
-                    .body(CommonResponse.success("문서 재수집이 시작되었습니다."));
+                    .body(CommonResponse.success("Document re-ingestion has started."));
                     
         } catch (BusinessException e) {
             log.error("Document resync failed: sourceId={}, error={}", sourceId, e.getMessage());
@@ -194,15 +194,15 @@ public class SourceController implements DocsSourceController{
         } catch (Exception e) {
             log.error("Unexpected error during document resync: sourceId={}", sourceId, e);
             return ResponseEntity.internalServerError()
-                    .body(CommonResponse.error("문서 재수집 중 오류가 발생했습니다: " + e.getMessage()));
+                    .body(CommonResponse.error("An error occurred during document re-ingestion: " + e.getMessage()));
         }
     }
 
     /**
-     * 특정 문서를 시스템에서 영구적으로 삭제
+     * Permanently delete a specific document from the system
      * 
-     * @param sourceId 삭제할 문서 ID
-     * @return 삭제 시작 응답
+     * @param sourceId Document ID to delete
+     * @return Deletion start response
      */
     @Override
     @DeleteMapping("/{sourceId}")
@@ -210,26 +210,26 @@ public class SourceController implements DocsSourceController{
         log.info("Document deletion requested: sourceId={}", sourceId);
 
         try {
-            // 문서 존재 확인
+            // Check if document exists
             SourceDocument sourceDocument = findSourceDocumentById(sourceId);
             
-            // 처리 중인 문서인지 확인
+            // Check if document is being processed
             if (sourceDocument.isProcessing()) {
                 throw new BusinessException(ErrorCode.RESOURCE_IS_BEING_PROCESSED, 
-                        "처리 중인 문서는 삭제할 수 없습니다.");
+                        "Documents being processed cannot be deleted.");
             }
             
-            // 삭제 상태로 변경
+            // Change status to DELETING
             sourceDocument.updateIngestionStatus(IngestionStatus.DELETING);
             sourceDocumentRepository.save(sourceDocument);
             
-            // 비동기 삭제 파이프라인 시작
+            // Start asynchronous deletion pipeline
             processDeletionPipeline(sourceId);
             
             log.info("Document deletion started successfully: sourceId={}", sourceId);
             
             return ResponseEntity.status(HttpStatus.ACCEPTED)
-                    .body(CommonResponse.success("문서 삭제가 시작되었습니다."));
+                    .body(CommonResponse.success("Document deletion has started."));
                     
         } catch (BusinessException e) {
             log.error("Document deletion failed: sourceId={}, error={}", sourceId, e.getMessage());
@@ -238,12 +238,12 @@ public class SourceController implements DocsSourceController{
         } catch (Exception e) {
             log.error("Unexpected error during document deletion: sourceId={}", sourceId, e);
             return ResponseEntity.internalServerError()
-                    .body(CommonResponse.error("문서 삭제 중 오류가 발생했습니다: " + e.getMessage()));
+                    .body(CommonResponse.error("An error occurred during document deletion: " + e.getMessage()));
         }
     }
 
     /**
-     * 문서 수집 파이프라인을 비동기적으로 실행합니다.
+     * Executes the document ingestion pipeline asynchronously.
      */
     @Async
     @Transactional
@@ -293,7 +293,7 @@ public class SourceController implements DocsSourceController{
     }
 
     /**
-     * 문서 삭제 파이프라인을 비동기적으로 실행합니다.
+     * Executes the document deletion pipeline asynchronously.
      */
     @Async
     public void processDeletionPipeline(UUID documentId) {
@@ -326,12 +326,12 @@ public class SourceController implements DocsSourceController{
 
 
     /**
-     * Elasticsearch에서 문서 관련 청크들을 삭제합니다.
+     * Deletes document-related chunks from Elasticsearch.
      */
     @Transactional
     private void deleteFromElasticsearch(UUID documentId) {
         try {
-            // 문서 ID로 쿼리하여 관련 청크들을 삭제
+            // Query by document ID to delete related chunks
             String query = String.format("""
                 {
                     "query": {
@@ -363,7 +363,7 @@ public class SourceController implements DocsSourceController{
     }
 
     /**
-     * PostgreSQL에서 문서 청크들을 삭제합니다.
+     * Deletes document chunks from PostgreSQL.
      */
     @Transactional
     private void deleteChunksFromPostgreSQL(UUID documentId) {
@@ -378,10 +378,10 @@ public class SourceController implements DocsSourceController{
         }
     }
 
-    // ===== 헬퍼 메소드들 =====
+    // ===== Helper Methods =====
 
     /**
-     * 정렬 조건 파싱
+     * Parse sorting criteria
      */
     private Sort parseSort(String sortParam) {
         try {
@@ -401,7 +401,7 @@ public class SourceController implements DocsSourceController{
     }
 
     /**
-     * SourceDocument를 DTO로 변환
+     * Convert SourceDocument to DTO
      */
     private SourceDocumentDto convertToDto(SourceDocument document) {
         return SourceDocumentDto.builder()
@@ -418,16 +418,16 @@ public class SourceController implements DocsSourceController{
     }
 
     /**
-     * ID로 SourceDocument 조회 (없으면 예외 발생)
+     * Find SourceDocument by ID (throws exception if not found)
      */
     private SourceDocument findSourceDocumentById(UUID sourceId) {
         return sourceDocumentRepository.findById(sourceId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.SOURCE_DOCUMENT_NOT_FOUND, 
-                        "해당 ID의 문서를 찾을 수 없습니다: " + sourceId));
+                        "Document with the specified ID not found: " + sourceId));
     }
 
     /**
-     * ErrorCode에 따른 HTTP 상태 코드 반환
+     * Return HTTP status code based on ErrorCode
      */
     private HttpStatus getHttpStatusFromErrorCode(ErrorCode errorCode) {
         return switch (errorCode) {

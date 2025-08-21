@@ -21,9 +21,6 @@ import java.util.*;
 import java.util.Arrays;
 
 /**
- * 임베딩된 청크를 Elasticsearch와 PostgreSQL에 저장하는 서비스.
- * 
- * Elasticsearch에는 검색을 위한 벡터와 메타데이터를,
  * Service for storing embedded chunks in Elasticsearch and PostgreSQL.
  * 
  * Stores vectors and metadata in Elasticsearch for search,
@@ -47,10 +44,10 @@ public class IndexingService {
     private String indexName;
 
     /**
-     * 임베딩된 청크들을 Elasticsearch와 PostgreSQL에 저장합니다.
+     * Stores embedded chunks in Elasticsearch and PostgreSQL.
      * 
-     * @param documentId 문서 ID
-     * @param embeddedChunks 저장할 임베딩된 청크 목록
+     * @param documentId Document ID
+     * @param embeddedChunks List of embedded chunks to store
      */
     public void indexChunks(UUID documentId, List<StructuredChunk> embeddedChunks) {
         long startTime = System.currentTimeMillis();
@@ -59,12 +56,12 @@ public class IndexingService {
         log.info("📎 [INDEXING] Starting chunk indexing: documentId={}, chunks={}", documentId, totalChunks);
 
         try {
-            // Step 1: Elasticsearch에 벡터 데이터 저장
+            // Step 1: Store vector data in Elasticsearch
             log.debug("🔍 [INDEXING] Step 1/2: Indexing to Elasticsearch: chunks={}", totalChunks);
             bulkIndexToElasticsearch(embeddedChunks);
             log.info("✅ [INDEXING] Elasticsearch indexing completed: documentId={}, chunks={}", documentId, totalChunks);
             
-            // Step 2: PostgreSQL에 계층 구조 정보 저장
+            // Step 2: Store hierarchical structure information in PostgreSQL
             log.debug("💾 [INDEXING] Step 2/2: Saving hierarchy to PostgreSQL: chunks={}", totalChunks);
             int savedChunks = saveChunkHierarchyToPostgreSQL(documentId, embeddedChunks);
             log.info("✅ [INDEXING] PostgreSQL hierarchy saved: documentId={}, savedChunks={}", documentId, savedChunks);
@@ -83,7 +80,7 @@ public class IndexingService {
     }
 
     /**
-     * Elasticsearch에 청크들을 벌크 인덱싱합니다.
+     * Bulk index chunks to Elasticsearch.
      */
     private void bulkIndexToElasticsearch(List<StructuredChunk> chunks) {
         long esStartTime = System.currentTimeMillis();
@@ -92,37 +89,37 @@ public class IndexingService {
         log.debug("🔍 [ELASTICSEARCH] Starting bulk indexing: chunks={}, index={}", totalChunks, indexName);
 
         try {
-            // 벌크 요청 바디 생성
+            // Create bulk request body
             log.debug("📦 [ELASTICSEARCH] Building bulk request body: chunks={}", totalChunks);
             StringBuilder bulkBody = new StringBuilder();
             
             for (StructuredChunk chunk : chunks) {
-                // 인덱스 메타데이터
+                // Index metadata
                 Map<String, Object> indexMeta = Map.of(
                         "index", Map.of("_id", chunk.getChunkId())
                 );
                 try {
                     bulkBody.append(objectMapper.writeValueAsString(indexMeta)).append("\n");
                     
-                    // 문서 데이터
+                    // Document data
                     Map<String, Object> doc = createElasticsearchDocumentPRD(chunk);
                     bulkBody.append(objectMapper.writeValueAsString(doc)).append("\n");
                 } catch (Exception jsonException) {
-                    log.error("JSON 직렬화 실패, 청크 건너뛰기: chunkId={}, error={}", 
+                    log.error("JSON serialization failed, skipping chunk: chunkId={}, error={}", 
                             chunk.getChunkId(), jsonException.getMessage());
-                    continue; // 해당 청크는 건너뛰고 계속 진행
+                    continue; // Skip this chunk and continue processing
                 }
             }
 
-            // HTTP 헤더 설정 (UTF-8 명시)
+            // Set HTTP headers (specify UTF-8)
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(new MediaType("application", "x-ndjson", StandardCharsets.UTF_8));
 
-            // 본문을 UTF-8 바이트로 전송하여 한글이 '?'로 치환되는 문제 방지
+            // Send body as UTF-8 bytes to prevent Korean characters from being replaced with '?'
             byte[] requestBytes = bulkBody.toString().getBytes(StandardCharsets.UTF_8);
             HttpEntity<byte[]> requestEntity = new HttpEntity<>(requestBytes, headers);
 
-            // 벌크 API 호출
+            // Call bulk API
             ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
                     elasticsearchUrl + "/" + indexName + "/_bulk",
                     HttpMethod.POST,
@@ -135,10 +132,10 @@ public class IndexingService {
                         "Elasticsearch bulk indexing failed");
             }
 
-            // 벌크 응답에서 오류 확인 
+            // Check for errors in bulk response
             Map<String, Object> responseBody = response.getBody();
             if (responseBody != null && Boolean.TRUE.equals(responseBody.get("errors"))) {
-                // 첫 번째 에러의 상세 정보 추출
+                // Extract detailed information from the first error
                 List<Map<String, Object>> items = (List<Map<String, Object>>) responseBody.get("items");
                 if (items != null && !items.isEmpty()) {
                     Map<String, Object> firstItem = items.get(0);
@@ -169,7 +166,7 @@ public class IndexingService {
     }
 
     /**
-     * PostgreSQL에 청크 계층 구조 정보를 저장합니다.
+     * Save chunk hierarchy information to PostgreSQL.
      */
     private int saveChunkHierarchyToPostgreSQL(UUID documentId, List<StructuredChunk> chunks) {
         long pgStartTime = System.currentTimeMillis();
@@ -179,7 +176,7 @@ public class IndexingService {
                 documentId, totalChunks);
 
         try {
-            // ✅ SourceDocument 엔티티를 가져와서 JPA 관계 설정
+            // ✅ Get SourceDocument entity to set up JPA relationship
             SourceDocument sourceDocument = sourceDocumentRepository.findById(documentId)
                     .orElseThrow(() -> new BusinessException(ErrorCode.DATABASE_ERROR, 
                             "SourceDocument not found: " + documentId));
@@ -206,13 +203,13 @@ public class IndexingService {
                         .hierarchyLevel(chunk.getHierarchyLevel())
                         .parentChunkId(parentChunkUuid)
                         .elementType(chunk.getElementType())
-                        .sequenceInDocument(0) // 기본값 설정, 실제로는 순서에 따라 설정해야 함
+                        .sequenceInDocument(0) // Set default value, should be set according to actual order
                         .build();
 
                 documentChunks.add(documentChunk);
             }
 
-            // 배치 저장
+            // Batch save
             long saveStartTime = System.currentTimeMillis();
             List<DocumentChunk> savedChunks = documentChunkRepository.saveAll(documentChunks);
             long saveDuration = System.currentTimeMillis() - saveStartTime;
@@ -233,26 +230,26 @@ public class IndexingService {
     }
 
     /**
-     * Elasticsearch 문서 생성
+     * Creates Elasticsearch document
      */
     private Map<String, Object> createElasticsearchDocumentPRD(StructuredChunk chunk) {
         Map<String, Object> doc = new HashMap<>();
         
-        // 루트 필드 (camelCase)
+        // Root fields (camelCase)
         doc.put("chunkId", chunk.getChunkId());
         doc.put("sourceDocumentId", chunk.getDocumentId());
         doc.put("content", sanitizeContent(chunk.getContent()));
         doc.put("embedding", chunk.getEmbedding());
-        doc.put("indexedAt", java.time.Instant.now().toString()); // ISO 문자열
+        doc.put("indexedAt", java.time.Instant.now().toString()); // ISO string
         
-        // metadata 구조
+        // metadata structure
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("title", chunk.getTitle());
         metadata.put("hierarchyLevel", chunk.getHierarchyLevel());
-        metadata.put("sequenceInDocument", 0); // 기본값
-        metadata.put("language", "ko"); // 한국어 기본값
+        metadata.put("sequenceInDocument", 0); // default value
+        metadata.put("language", "ko"); // Korean default value
 
-        // 실제 파일 타입을 SourceDocument에서 조회하여 반영 
+        // Reflect actual file type by querying from SourceDocument 
         String resolvedFileType = "UNKNOWN";
         try {
             UUID srcId = UUID.fromString(chunk.getDocumentId());
@@ -264,8 +261,8 @@ public class IndexingService {
         }
         metadata.put("fileType", resolvedFileType);
         
-        // breadcrumbs 처리 (기본값: 빈 배열)
-        metadata.put("breadcrumbs", Arrays.asList()); // 빈 배열 기본값
+        // Handle breadcrumbs (default: empty array)
+        metadata.put("breadcrumbs", Arrays.asList()); // empty array default value
         
         doc.put("metadata", metadata);
         
@@ -273,7 +270,7 @@ public class IndexingService {
     }
 
     /**
-     * content 필드의 Java 코드나 특수문자를 정리하여 JSON 파싱 에러를 방지합니다.
+     * Cleans up Java code or special characters in content field to prevent JSON parsing errors.
      */
     private String sanitizeContent(String content) {
         if (content == null || content.trim().isEmpty()) {
@@ -281,20 +278,20 @@ public class IndexingService {
         }
         
         return content
-            // Java 코드 관련 정리
-            .replaceAll("\\{[^}]*\\}", "")           // 중괄호 내용 제거
-            .replaceAll("\\[.*?\\]", "")             // 대괄호 내용 제거
-            .replaceAll("\\b(int|String|void|public|private|static|final|class|interface|extends|implements)\\b", "")  // Java 키워드 제거
-            .replaceAll("\\b(if|else|for|while|switch|case|break|continue|return|throw|try|catch|finally)\\b", "")  // Java 제어문 제거
-            .replaceAll("\\b(new|this|super|null|true|false)\\b", "")  // Java 리터럴 제거
+            // Java code related cleanup
+            .replaceAll("\\{[^}]*\\}", "")           // Remove curly brace content
+            .replaceAll("\\[.*?\\]", "")             // Remove square bracket content
+            .replaceAll("\\b(int|String|void|public|private|static|final|class|interface|extends|implements)\\b", "")  // Remove Java keywords
+            .replaceAll("\\b(if|else|for|while|switch|case|break|continue|return|throw|try|catch|finally)\\b", "")  // Remove Java control statements
+            .replaceAll("\\b(new|this|super|null|true|false)\\b", "")  // Remove Java literals
             
-            // 특수문자 정리
-            .replaceAll("\\s+", " ")                 // 연속 공백을 단일 공백으로
-            .replaceAll("[\\r\\n\\t]+", " ")         // 줄바꿈, 탭을 공백으로
-            .replaceAll("\\s*[;=+\\-*/%<>!&|^~]\\s*", " ")  // 연산자 주변 공백 정리
+            // Special character cleanup
+            .replaceAll("\\s+", " ")                 // Replace consecutive spaces with single space
+            .replaceAll("[\\r\\n\\t]+", " ")         // Replace newlines and tabs with space
+            .replaceAll("\\s*[;=+\\-*/%<>!&|^~]\\s*", " ")  // Clean up spaces around operators
             
-            // 기타 정리
-            .replaceAll("\\s+", " ")                 // 다시 연속 공백 정리
+            // Other cleanup
+            .replaceAll("\\s+", " ")                 // Clean up consecutive spaces again
             .trim();
     }
 

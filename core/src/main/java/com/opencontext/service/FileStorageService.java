@@ -71,38 +71,38 @@
             long fileSize = file.getSize();
             String contentType = resolveContentType(file);
             
-            log.info("📤 [UPLOAD] Starting file upload with metadata: filename={}, size={} bytes, contentType={}", 
+            log.info("[UPLOAD] Starting file upload with metadata: filename={}, size={} bytes, contentType={}", 
                     filename, fileSize, contentType);
             
             long startTime = System.currentTimeMillis();
 
             // Validate file
-            log.debug("📋 [UPLOAD] Step 1/5: Validating file: {}", filename);
+            log.debug(" [UPLOAD] Step 1/5: Validating file: {}", filename);
             validateFile(file);
-            log.info("✅ [UPLOAD] File validation completed successfully: {}", filename);
+            log.info("[UPLOAD] File validation completed successfully: {}", filename);
 
             // Calculate file checksum to prevent duplicates
-            log.debug("🔍 [UPLOAD] Step 2/5: Calculating file checksum: {}", filename);
+            log.debug("[UPLOAD] Step 2/5: Calculating file checksum: {}", filename);
             String fileChecksum = calculateFileChecksum(file);
-            log.info("✅ [UPLOAD] File checksum calculated: {} -> {}", filename, fileChecksum);
+            log.info("[UPLOAD] File checksum calculated: {} -> {}", filename, fileChecksum);
             
             // Check for duplicate files
-            log.debug("🔍 [UPLOAD] Step 3/5: Checking for duplicate files: {}", filename);
+            log.debug("[UPLOAD] Step 3/5: Checking for duplicate files: {}", filename);
             if (sourceDocumentRepository.existsByFileChecksum(fileChecksum)) {
-                log.warn("❌ [UPLOAD] Duplicate file upload attempt: filename={}, checksum={}", filename, fileChecksum);
+                log.warn("[UPLOAD] Duplicate file upload attempt: filename={}, checksum={}", filename, fileChecksum);
                 throw new BusinessException(ErrorCode.DUPLICATE_FILE_UPLOADED, 
                         "A file with identical content already exists.");
             }
-            log.info("✅ [UPLOAD] No duplicate files found: {}", filename);
+            log.info("[UPLOAD] No duplicate files found: {}", filename);
 
             try {
                 // Upload file to MinIO
-                log.debug("☁️ [UPLOAD] Step 4/5: Uploading file to MinIO: {}", filename);
+                log.debug("[UPLOAD] Step 4/5: Uploading file to MinIO: {}", filename);
                 String objectKey = uploadFile(file, contentType);
-                log.info("✅ [UPLOAD] File uploaded to MinIO successfully: {} -> {}", filename, objectKey);
+                log.info("[UPLOAD] File uploaded to MinIO successfully: {} -> {}", filename, objectKey);
 
                 // Create SourceDocument entity
-                log.debug("💾 [UPLOAD] Step 5/5: Creating database record: {}", filename);
+                log.debug("[UPLOAD] Step 5/5: Creating database record: {}", filename);
                 SourceDocument sourceDocument = SourceDocument.builder()
                         .originalFilename(file.getOriginalFilename())
                         .fileStoragePath(objectKey)
@@ -116,14 +116,14 @@
                 SourceDocument savedDocument = sourceDocumentRepository.save(sourceDocument);
                 
                 long duration = System.currentTimeMillis() - startTime;
-                log.info("🎉 [UPLOAD] File upload completed successfully: id={}, filename={}, duration={}ms", 
+                log.info(" [UPLOAD] File upload completed successfully: id={}, filename={}, duration={}ms", 
                         savedDocument.getId(), savedDocument.getOriginalFilename(), duration);
 
                 return savedDocument;
 
             } catch (Exception e) {
                 long duration = System.currentTimeMillis() - startTime;
-                log.error("❌ [UPLOAD] File upload failed: filename={}, duration={}ms, error={}", 
+                log.error("[UPLOAD] File upload failed: filename={}, duration={}ms, error={}", 
                         filename, duration, e.getMessage(), e);
                 if (e instanceof BusinessException) {
                     throw e;
@@ -157,13 +157,13 @@
 
                 minioClient.putObject(putObjectArgs);
                 
-                log.debug("☁️ [MINIO] File uploaded to MinIO: {} -> bucket:{}, key:{}", 
+                log.debug("[MINIO] File uploaded to MinIO: {} -> bucket:{}, key:{}", 
                         file.getOriginalFilename(), minioConfig.getBucketName(), objectKey);
 
                 return objectKey;
 
             } catch (Exception e) {
-                log.error("❌ [MINIO] MinIO upload failed: filename={}, error={}", 
+                log.error("[MINIO] MinIO upload failed: filename={}, error={}", 
                         file.getOriginalFilename(), e.getMessage(), e);
                 throw new BusinessException(ErrorCode.FILE_UPLOAD_FAILED, 
                         "Failed to upload file to storage: " + e.getMessage());
@@ -184,11 +184,11 @@
                         .build();
 
                 InputStream stream = minioClient.getObject(getObjectArgs);
-                log.debug("☁️ [MINIO] File downloaded successfully: key={}", objectKey);
+                log.debug("[MINIO] File downloaded successfully: key={}", objectKey);
                 return stream;
 
             } catch (Exception e) {
-                log.error("❌ [MINIO] File download failed: key={}, error={}", objectKey, e.getMessage(), e);
+                log.error("[MINIO] File download failed: key={}, error={}", objectKey, e.getMessage(), e);
                 throw new BusinessException(ErrorCode.FILE_NOT_FOUND, 
                         "Failed to download file: " + e.getMessage());
             }
@@ -207,10 +207,10 @@
                         .build();
 
                 minioClient.removeObject(removeObjectArgs);
-                log.debug("🗑️ [MINIO] File deleted successfully: key={}", objectKey);
+                log.debug("[MINIO] File deleted successfully: key={}", objectKey);
 
             } catch (Exception e) {
-                log.error("❌ [MINIO] File deletion failed: key={}, error={}", objectKey, e.getMessage(), e);
+                log.error("[MINIO] File deletion failed: key={}, error={}", objectKey, e.getMessage(), e);
                 throw new BusinessException(ErrorCode.FILE_DELETE_FAILED, 
                         "Failed to delete file: " + e.getMessage());
             }
@@ -254,11 +254,11 @@
                             .build();
                     
                     minioClient.makeBucket(makeBucketArgs);
-                    log.info("☁️ [MINIO] Created MinIO bucket: {}", minioConfig.getBucketName());
+                    log.info(" [MINIO] Created MinIO bucket: {}", minioConfig.getBucketName());
                 }
 
             } catch (Exception e) {
-                log.error("❌ [MINIO] Failed to ensure bucket exists: bucket={}, error={}", 
+                log.error("[MINIO] Failed to ensure bucket exists: bucket={}, error={}", 
                         minioConfig.getBucketName(), e.getMessage(), e);
                 throw new BusinessException(ErrorCode.STORAGE_ERROR, 
                         "Failed to ensure bucket exists: " + e.getMessage());
@@ -292,7 +292,7 @@
          */
         @Transactional(readOnly = true)
         public SourceDocument getDocument(UUID documentId) {
-            log.debug("📖 [QUERY] Retrieving document: id={}", documentId);
+            log.debug(" [QUERY] Retrieving document: id={}", documentId);
             
             return sourceDocumentRepository.findById(documentId)
                     .orElseThrow(() -> new BusinessException(ErrorCode.SOURCE_DOCUMENT_NOT_FOUND, 
@@ -307,7 +307,7 @@
          */
         @Transactional(readOnly = true)
         public Page<SourceDocumentDto> getAllDocuments(Pageable pageable) {
-            log.debug("📖 [QUERY] Retrieving documents with pagination: page={}, size={}", 
+            log.debug(" [QUERY] Retrieving documents with pagination: page={}, size={}", 
                     pageable.getPageNumber(), pageable.getPageSize());
 
             return sourceDocumentRepository.findAllByOrderByCreatedAtDesc(pageable)
@@ -325,7 +325,7 @@
                     .ifPresent(document -> {
                         document.updateIngestionStatus(status);
                         sourceDocumentRepository.save(document);
-                        log.info("📝 [STATUS] Document status updated: id={}, status={}", documentId, status);
+                        log.info(" [STATUS] Document status updated: id={}, status={}", documentId, status);
                     });
         }
 
@@ -339,7 +339,7 @@
                     .ifPresent(document -> {
                         document.updateIngestionStatus(IngestionStatus.COMPLETED);
                         sourceDocumentRepository.save(document);
-                        log.info("🎉 [STATUS] Document status updated to COMPLETED: id={}", documentId);
+                        log.info(" [STATUS] Document status updated to COMPLETED: id={}", documentId);
                     });
         }
 
@@ -355,10 +355,10 @@
                         .ifPresent(document -> {
                             document.updateIngestionStatusToError(errorMessage);
                             sourceDocumentRepository.save(document);
-                            log.error("❌ [STATUS] Document status updated to ERROR: id={}, errorMessage={}", documentId, errorMessage);
+                            log.error("[STATUS] Document status updated to ERROR: id={}, errorMessage={}", documentId, errorMessage);
                         });
             } catch (Exception e) {
-                log.error("❌ [STATUS] Failed to update document status to ERROR: id={}, error={}", 
+                log.error("[STATUS] Failed to update document status to ERROR: id={}, error={}", 
                         documentId, e.getMessage(), e);
             }
         }
@@ -372,18 +372,18 @@
         @Transactional
         public void deleteDocument(UUID documentId) {
             long startTime = System.currentTimeMillis();
-            log.info("🗑️ [DELETE] Starting comprehensive document deletion: id={}", documentId);
+            log.info("[DELETE] Starting comprehensive document deletion: id={}", documentId);
 
             SourceDocument document = getDocument(documentId);
             String filename = document.getOriginalFilename();
             IngestionStatus status = document.getIngestionStatus();
             
-            log.info("📝 [DELETE] Document details: filename={}, status={}, size={} bytes", 
+            log.info(" [DELETE] Document details: filename={}, status={}, size={} bytes", 
                     filename, status, document.getFileSize());
 
             // Check if document is currently being processed (but allow DELETING status)
             if (document.isProcessing() && status != IngestionStatus.DELETING) {
-                log.warn("⚠️ [DELETE] Cannot delete document in processing state: id={}, status={}", 
+                log.warn(" [DELETE] Cannot delete document in processing state: id={}, status={}", 
                         documentId, status);
                 throw new BusinessException(ErrorCode.RESOURCE_IS_BEING_PROCESSED, 
                         "Document is currently being processed and cannot be deleted.");
@@ -391,42 +391,42 @@
 
             // Update status to DELETING (only if not already DELETING)
             if (status != IngestionStatus.DELETING) {
-                log.debug("📝 [DELETE] Step 1/4: Updating status to DELETING: {}", filename);
+                log.debug(" [DELETE] Step 1/4: Updating status to DELETING: {}", filename);
                 document.updateIngestionStatus(IngestionStatus.DELETING);
                 sourceDocumentRepository.save(document);
-                log.info("✅ [DELETE] Status updated to DELETING: {}", filename);
+                log.info(" [DELETE] Status updated to DELETING: {}", filename);
             } else {
-                log.info("📝 [DELETE] Document already in DELETING status: {}", filename);
+                log.info(" [DELETE] Document already in DELETING status: {}", filename);
             }
 
             try {
                 // Step 2: Delete from Elasticsearch (if exists)
-                log.debug("🔍 [DELETE] Step 2/4: Deleting from Elasticsearch: {}", filename);
+                log.debug(" [DELETE] Step 2/4: Deleting from Elasticsearch: {}", filename);
                 deleteFromElasticsearch(documentId);
-                log.info("✅ [DELETE] Elasticsearch deletion completed: {}", filename);
+                log.info("[DELETE] Elasticsearch deletion completed: {}", filename);
 
                 // Step 3: Delete chunks from PostgreSQL
-                log.debug("💾 [DELETE] Step 3/4: Deleting chunks from PostgreSQL: {}", filename);
+                log.debug("[DELETE] Step 3/4: Deleting chunks from PostgreSQL: {}", filename);
                 int deletedChunks = deleteChunksFromPostgreSQL(documentId);
-                log.info("✅ [DELETE] PostgreSQL chunks deleted: {} chunks removed for {}", deletedChunks, filename);
+                log.info(" [DELETE] PostgreSQL chunks deleted: {} chunks removed for {}", deletedChunks, filename);
 
                 // Step 4: Delete file from MinIO
-                log.debug("☁️ [DELETE] Step 4/4: Deleting file from MinIO: {}", filename);
+                log.debug("[DELETE] Step 4/4: Deleting file from MinIO: {}", filename);
                 deleteFile(document.getFileStoragePath());
-                log.info("✅ [DELETE] MinIO file deleted: {} -> {}", filename, document.getFileStoragePath());
+                log.info("[DELETE] MinIO file deleted: {} -> {}", filename, document.getFileStoragePath());
 
                 // Final step: Delete SourceDocument record
-                log.debug("💾 [DELETE] Final step: Deleting source document record: {}", filename);
+                log.debug("[DELETE] Final step: Deleting source document record: {}", filename);
                 sourceDocumentRepository.delete(document);
-                log.info("✅ [DELETE] Source document record deleted: {}", filename);
+                log.info("[DELETE] Source document record deleted: {}", filename);
 
                 long duration = System.currentTimeMillis() - startTime;
-                log.info("🎉 [DELETE] Document deletion completed successfully: id={}, filename={}, duration={}ms", 
+                log.info("[DELETE] Document deletion completed successfully: id={}, filename={}, duration={}ms", 
                         documentId, filename, duration);
 
             } catch (Exception e) {
                 long duration = System.currentTimeMillis() - startTime;
-                log.error("❌ [DELETE] Document deletion failed: id={}, filename={}, duration={}ms, error={}", 
+                log.error("[DELETE] Document deletion failed: id={}, filename={}, duration={}ms, error={}", 
                         documentId, filename, duration, e.getMessage(), e);
                 
                 // Try to revert status if possible
@@ -435,10 +435,10 @@
                     if (updatedDoc != null) {
                         updatedDoc.updateIngestionStatusToError("Deletion failed: " + e.getMessage());
                         sourceDocumentRepository.save(updatedDoc);
-                        log.info("🔄 [DELETE] Status reverted to ERROR after deletion failure: {}", filename);
+                        log.info("[DELETE] Status reverted to ERROR after deletion failure: {}", filename);
                     }
                 } catch (Exception revertEx) {
-                    log.error("❌ [DELETE] Failed to revert status after deletion failure: {}", filename, revertEx);
+                    log.error("[DELETE] Failed to revert status after deletion failure: {}", filename, revertEx);
                 }
                 
                 throw new BusinessException(ErrorCode.DELETION_PIPELINE_FAILED, 
@@ -482,7 +482,7 @@
          */
         private void deleteFromElasticsearch(UUID documentId) {
             try {
-                log.debug("🔍 [ELASTICSEARCH] Starting deletion for document: {}", documentId);
+                log.debug("[ELASTICSEARCH] Starting deletion for document: {}", documentId);
                 
                 // Create delete-by-query request
                 String deleteQuery = String.format(
@@ -490,14 +490,14 @@
                         documentId.toString()
                 );
                 
-                log.debug("🔍 [ELASTICSEARCH] Delete query: {}", deleteQuery);
+                log.debug(" [ELASTICSEARCH] Delete query: {}", deleteQuery);
                 
                 HttpHeaders headers = new HttpHeaders();
                 headers.setContentType(MediaType.APPLICATION_JSON);
                 HttpEntity<String> requestEntity = new HttpEntity<>(deleteQuery, headers);
                 
                 String deleteUrl = String.format("%s/%s/_delete_by_query", elasticsearchUrl, indexName);
-                log.debug("🔍 [ELASTICSEARCH] Delete URL: {}", deleteUrl);
+                log.debug(" [ELASTICSEARCH] Delete URL: {}", deleteUrl);
                 
                 ResponseEntity<String> response = restTemplate.exchange(
                         deleteUrl,
@@ -508,10 +508,10 @@
                 
                 if (response.getStatusCode().is2xxSuccessful()) {
                     String responseBody = response.getBody();
-                    log.info("✅ [ELASTICSEARCH] Document chunks deleted successfully: documentId={}, response={}", 
+                    log.info(" [ELASTICSEARCH] Document chunks deleted successfully: documentId={}, response={}", 
                             documentId, responseBody);
                 } else {
-                    log.warn("⚠️ [ELASTICSEARCH] Delete operation returned non-2xx status: documentId={}, status={}, response={}", 
+                    log.warn(" [ELASTICSEARCH] Delete operation returned non-2xx status: documentId={}, status={}, response={}", 
                             documentId, response.getStatusCode(), response.getBody());
                 }
                 
@@ -519,9 +519,9 @@
                 // Log the error but don't fail the entire deletion process
                 // This handles cases where the document was never indexed (ERROR status)
                 if (e.getMessage() != null && e.getMessage().contains("index_not_found_exception")) {
-                    log.info("📝 [ELASTICSEARCH] Index not found - document was likely never indexed: documentId={}", documentId);
+                    log.info(" [ELASTICSEARCH] Index not found - document was likely never indexed: documentId={}", documentId);
                 } else {
-                    log.warn("⚠️ [ELASTICSEARCH] Failed to delete from Elasticsearch (continuing deletion): documentId={}, error={}", 
+                    log.warn(" [ELASTICSEARCH] Failed to delete from Elasticsearch (continuing deletion): documentId={}, error={}", 
                             documentId, e.getMessage(), e);
                 }
             }
@@ -535,17 +535,17 @@
          */
         private int deleteChunksFromPostgreSQL(UUID documentId) {
             try {
-                log.debug("💾 [POSTGRESQL] Starting chunk deletion for document: {}", documentId);
+                log.debug(" [POSTGRESQL] Starting chunk deletion for document: {}", documentId);
                 
                 int deletedChunks = documentChunkRepository.deleteBySourceDocumentId(documentId);
                 
-                log.info("✅ [POSTGRESQL] Chunks deleted successfully: documentId={}, deletedCount={}", 
+                log.info(" [POSTGRESQL] Chunks deleted successfully: documentId={}, deletedCount={}", 
                         documentId, deletedChunks);
                 
                 return deletedChunks;
                 
             } catch (Exception e) {
-                log.error("❌ [POSTGRESQL] Failed to delete chunks: documentId={}, error={}", 
+                log.error(" [POSTGRESQL] Failed to delete chunks: documentId={}, error={}", 
                         documentId, e.getMessage(), e);
                 throw new BusinessException(ErrorCode.DATABASE_ERROR, 
                         "Failed to delete document chunks: " + e.getMessage());
@@ -577,13 +577,13 @@
             
             // Check if the resolved content type is supported
             if (!ALLOWED_CANONICAL_CONTENT_TYPES.contains(resolvedContentType)) {
-                log.debug("❌ [UPLOAD] Unsupported content type: filename={}, original={}, resolved={}", 
+                log.debug(" [UPLOAD] Unsupported content type: filename={}, original={}, resolved={}", 
                         filename, file.getContentType(), resolvedContentType);
                 throw new BusinessException(ErrorCode.UNSUPPORTED_MEDIA_TYPE,
                         "Unsupported file type. Supported types: PDF, Markdown, and plain text files.");
             }
 
-            log.debug("✅ [UPLOAD] File validation passed: filename={}, resolved_type={}", filename, resolvedContentType);
+            log.debug(" [UPLOAD] File validation passed: filename={}, resolved_type={}", filename, resolvedContentType);
         }
 
         /**
@@ -603,7 +603,7 @@
                 return sb.toString();
                 
             } catch (NoSuchAlgorithmException | IOException e) {
-                log.error("❌ [UPLOAD] Failed to calculate file checksum: filename={}, error={}", 
+                log.error(" [UPLOAD] Failed to calculate file checksum: filename={}, error={}", 
                         file.getOriginalFilename(), e.getMessage(), e);
                 throw new BusinessException(ErrorCode.FILE_UPLOAD_FAILED, 
                         "Failed to calculate file checksum: " + e.getMessage());
