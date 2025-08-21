@@ -223,9 +223,6 @@ We welcome contributions! Please see our [Contributing Guide](https://github.com
 - **feature/***: New features and improvements
 - **hotfix/***: Critical production fixes
 
-### Security
-For security vulnerabilities, please email security@opencontext.ai instead of opening a public issue.
-
 ## Support
 
 - **Issues**: [GitHub Issues](../../issues)
@@ -235,7 +232,3 @@ For security vulnerabilities, please email security@opencontext.ai instead of op
 ## License
 
 Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) file for details.
-
----
-
-**Enterprise Support**: Need help with deployment, customization, or security reviews? Contact us at enterprise@opencontext.ai
