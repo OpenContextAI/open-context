@@ -2,6 +2,7 @@ services:
   # PostgreSQL Database
   postgres:
     image: postgres:16-alpine
+    platform: linux/amd64
     container_name: postgres
     environment:
       POSTGRES_DB: opencontext
@@ -11,7 +12,6 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - opencontext-network
     healthcheck:
@@ -49,6 +49,7 @@ services:
   # Ollama Model Downloader
   ollama-init:
     image: ollama/ollama:latest
+    platform: linux/amd64
     container_name: opencontext-ollama-init
     volumes:
       - ollama_data:/root/.ollama
@@ -58,17 +59,11 @@ services:
       - OLLAMA_HOST=0.0.0.0
     entrypoint: /bin/sh
     command: -c "ollama serve & sleep 10 && ollama pull dengcao/Qwen3-Embedding-0.6B:F16 && echo 'Model download completed' && pkill ollama"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
 
   # Ollama Server for embeddings
   ollama:
     image: ollama/ollama:latest
+    platform: linux/amd64
     container_name: ollama
     ports:
       - "11434:11434"
@@ -78,22 +73,35 @@ services:
       - opencontext-network
     environment:
       - OLLAMA_HOST=0.0.0.0
-      # - OLLAMA_GPU_OVERHEAD=0
-      # - OLLAMA_NUM_PARALLEL=1
+      - OLLAMA_NUM_PARALLEL=1
     depends_on:
       - ollama-init
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
+    # To enable GPU support, set OLLAMA_RUNTIME=nvidia in your environment.
+    # If you do not have an NVIDIA GPU, leave OLLAMA_RUNTIME unset.
+    runtime: ${OLLAMA_RUNTIME:-}
+    restart: unless-stopped
+
+  # Kibana for Elasticsearch management
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.11.3
+    platform: linux/amd64
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - XPACK_SECURITY_ENABLED=false
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - opencontext-network
     restart: unless-stopped
 
   # MinIO Object Storage
   minio:
     image: minio/minio:latest
+    platform: linux/amd64
     container_name: minio
     ports:
       - "9000:9000"
@@ -111,9 +119,12 @@ services:
   # Unstructured.io API for document parsing
   unstructured-api:
     image: quay.io/unstructured-io/unstructured-api:latest
+    platform: linux/amd64
     container_name: unstructured-api
     ports:
       - "8000:8000"
+    environment:
+    - UNSTRUCTURED_MEMORY_FREE_MINIMUM_MB=512
     networks:
       - opencontext-network
     restart: unless-stopped
@@ -129,15 +140,6 @@ services:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/opencontext
-      - SPRING_DATASOURCE_USERNAME=user
-      - SPRING_DATASOURCE_PASSWORD=password
-      - ELASTICSEARCH_URL=http://elasticsearch:9200
-      - OLLAMA_BASE_URL=http://ollama:11434
-      - UNSTRUCTURED_API_URL=http://unstructured-api:8000
-      - MINIO_URL=http://minio:9000
-      - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-your-minio-access-key}
-      - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-your-minio-secret-key}
     depends_on:
       postgres:
         condition: service_healthy
@@ -153,6 +155,22 @@ services:
       - opencontext-network
     restart: unless-stopped
 
+  # Mock Server for testing
+  open-context-mock-server:
+    build:
+      context: ./mcp-adapter
+      dockerfile: Dockerfile
+    image: opencontext/mcp-adapter:0.1.0
+    container_name: open-context-mock-server
+    ports:
+      - "8001:8001" 
+    command: ["npm", "run", "mock"]
+    environment:
+      - MOCK_SERVER_PORT=8001  
+    networks:
+      - opencontext-network
+    restart: unless-stopped
+
   # Node.js MCP Adapter
   open-context-mcp-adapter:
     build:
@@ -160,6 +178,30 @@ services:
       dockerfile: Dockerfile
     image: opencontext/mcp-adapter:0.1.0
     container_name: open-context-mcp-adapter
+    ports:
+      - "3000:3000"
+    environment:
+      - OPENCONTEXT_CORE_URL=http://open-context-core:8080  
+      - OPENCONTEXT_DEFAULT_TOP_K=5
+      - OPENCONTEXT_DEFAULT_MAX_TOKENS=25000
+      - MCP_SERVER_PORT=3000
+      - MCP_MODE=http
+    depends_on:
+      - open-context-core  
+    networks:
+      - opencontext-network
+    command: ["node", "dist/index.js", "--transport", "http", "--port", "3000"]
+    restart: unless-stopped
+
+  # Admin UI Frontend
+  open-context-admin-ui:
+    build:
+      context: ./admin-ui
+      dockerfile: Dockerfile
+    image: opencontext/admin-ui:0.1.0
+    container_name: open-context-admin-ui
+    ports:
+      - "3001:80"
     depends_on:
       - open-context-core
     networks:

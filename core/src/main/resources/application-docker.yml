@@ -15,12 +15,18 @@ spring:
   # JPA Configuration
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: validate
     show-sql: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
+
+  # Flyway Configuration (Docker)
+  flyway:
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    validate-on-migrate: true
 
   # Servlet Configuration
   servlet:
@@ -28,14 +34,39 @@ spring:
       max-file-size: 100MB
       max-request-size: 100MB
 
+# Application-specific Configuration (Docker)
+app:
   # Elasticsearch Configuration (Docker)
   elasticsearch:
-    uris: http://elasticsearch:9200
-
-# Ollama Configuration (Docker)
-ollama:
-  base-url: http://ollama:11434
-  model: dengcao/Qwen3-Embedding-0.6B:F16
+    url: http://elasticsearch:9200
+    index: document_chunks_index
+  
+  # Ollama Configuration (Docker)
+  ollama:
+    api:
+      url: http://ollama:11434
+    embedding:
+      model: dengcao/Qwen3-Embedding-0.6B:F16
+  
+  # Embedding Configuration
+  embedding:
+    batch-size: 2  # 더 작은 배치로 안정성 우선
+  
+  # Search Configuration
+  search:
+    snippet-max-length: 50
+    bm25-weight: 0.3
+    vector-weight: 0.7
+  
+  # Content Configuration
+  content:
+    default-max-tokens: 25000
+    tokenizer: tiktoken-cl100k_base
+  
+  # Unstructured API Configuration
+  unstructured:
+    api:
+      url: http://unstructured-api:8000
 
 # MinIO Configuration (Docker)
 minio:
@@ -44,9 +75,7 @@ minio:
   secret-key: minioadmin123!
   bucket-name: opencontext-documents
 
-# Unstructured.io Configuration (Docker)
-unstructured:
-  base-url: http://unstructured-api:8000
+
 
 # Application Configuration
 opencontext:
@@ -65,6 +94,9 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+  health:
+      elasticsearch:
+        enabled: false
 
 # Logging Configuration
 logging:
