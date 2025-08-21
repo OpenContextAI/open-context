@@ -453,40 +453,51 @@ docker compose up -d open-context-mcp-adapter
 
 2. **Register with your AI assistant:**
 
+**MCP Configuration:**
+
 **For Cursor/VSCode:**
-Add to your MCP configuration:
 ```json
 {
   "mcpServers": {
     "opencontext": {
-      "command": "docker",
-      "args": [
-        "compose", 
-        "exec", 
-        "-T", 
-        "open-context-mcp-adapter", 
-        "node", 
-        "/usr/src/app/dist/index.js"
-      ],
-      "env": {
-        "OPENCONTEXT_API_URL": "http://localhost:8080"
-      }
+      "url": "http://localhost:3000/mcp"
     }
   }
 }
 ```
 
-**For other MCP-compatible tools:**
-```bash
-# Direct execution command
-docker compose exec -T open-context-mcp-adapter node /usr/src/app/dist/index.js
+**For other MCP clients:**
+```json
+{
+  "mcpServers": {
+    "opencontext": {
+      "type": "streamable-http",
+      "url": "http://localhost:3000/mcp"
+    }
+  }
+}
 ```
 
+**Note:** The MCP server runs in HTTP mode and requires an MCP client for communication. Direct execution is not possible.
+
 3. **Verify MCP connection:**
+
+**HTTP Endpoint Tests:**
 ```bash
-# Test the find_knowledge tool
-echo '{"tool_name": "find_knowledge", "parameters": {"query": "test", "topK": 3}}' | \
-  docker compose exec -T open-context-mcp-adapter node /usr/src/app/dist/index.js
+# Health check
+curl http://localhost:3000/health
+
+# Server information
+curl http://localhost:3000/info
+
+# Ping test
+curl http://localhost:3000/ping
+```
+
+**MCP Protocol Test (requires MCP client):**
+```bash
+# Note: Direct tool testing is not possible without an MCP client
+# Use Cursor/VSCode MCP integration or MCP Inspector for actual tool testing
 ```
 
 ### Advanced Configuration
