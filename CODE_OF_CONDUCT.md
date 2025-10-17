@@ -1,49 +1,32 @@
-## 📜 Code of Conduct
+## 행동 강령
 
-### Our Pledge
+### 우리의 서약
+우리는 구성원, 기여자, 리더로서 나이, 신체 크기, 가시적 또는 비가시적 장애, 민족성, 성적 특징, 성 정체성과 표현, 경험 수준, 교육, 사회경제적 지위, 국적, 외모, 인종, 종교, 또는 성적 정체성과 지향에 관계없이 모든 사람이 괴롭힘 없는 경험을 할 수 있도록 노력할 것을 서약합니다.
 
-We as members, contributors, and leaders pledge to make participation in our community a harassment-free experience for everyone, regardless of age, body size, visible or invisible disability, ethnicity, sex characteristics, gender identity and expression, level of experience, education, socio-economic status, nationality, personal appearance, race, religion, or sexual identity and orientation.
+우리는 개방적이고, 환영하며, 다양하고, 포용적이며, 건강한 커뮤니티에 기여하는 방식으로 행동하고 상호작용할 것을 서약합니다.
 
-We pledge to act and interact in ways that contribute to an open, welcoming, diverse, inclusive, and healthy community.
+### 우리의 기준
+긍정적인 환경에 기여하는 행동의 예시:
+* 다른 사람들에게 공감과 친절을 보여주기
+* 다른 의견, 관점, 경험을 존중하기
+* 건설적인 피드백을 주고 우아하게 받아들이기
+* 실수로 영향을 받은 사람들에게 책임을 받아들이고 사과하며, 그 경험에서 배우기
+* 개인으로서 뿐만 아니라 전체 커뮤니티를 위해 무엇이 최선인지에 집중하기
 
----
+용납할 수 없는 행동의 예시:
+* 성적인 언어나 이미지 사용, 모든 종류의 성적 관심이나 접근
+* 트롤링, 모욕적이거나 경멸적인 댓글, 개인적 또는 정치적 공격
+* 공개적 또는 사적 괴롭힘
+* 명시적 허가 없이 타인의 물리적 주소나 이메일 주소 같은 개인정보 공개
+* 전문적 환경에서 부적절하다고 합리적으로 간주될 수 있는 기타 행위
 
-### Our Standards
+### 집행 책임
+커뮤니티 리더는 우리의 수용 가능한 행동 기준을 명확히 하고 시행할 책임이 있으며, 부적절하거나 위협적이거나 공격적이거나 해로운 것으로 판단되는 모든 행동에 대해 적절하고 공정한 시정 조치를 취할 것입니다.
 
-Examples of behavior that contributes to a positive environment include:
+### 범위
+이 행동 강령은 모든 커뮤니티 공간 내에서 적용되며, 개인이 공개 공간에서 커뮤니티를 공식적으로 대표할 때도 적용됩니다 (예: 공식 이메일 주소 사용, 공식 소셜 미디어 계정을 통한 게시, 행사에서 지정된 대표로 활동).
 
-* Demonstrating empathy and kindness toward other people
-* Being respectful of differing opinions, viewpoints, and experiences
-* Giving and gracefully accepting constructive feedback
-* Accepting responsibility and apologizing to those affected by our mistakes, and learning from the experience
-* Focusing on what is best not just for us as individuals, but for the overall community
+### 집행
+학대, 괴롭힘 또는 기타 용납할 수 없는 행동의 사례는 \[연락 방법 삽입]으로 집행을 담당하는 커뮤니티 리더에게 보고할 수 있습니다.
 
-Examples of unacceptable behavior include:
-
-* The use of sexualized language or imagery, and sexual attention or advances of any kind
-* Trolling, insulting or derogatory comments, and personal or political attacks
-* Public or private harassment
-* Publishing others’ private information, such as a physical or email address, without their explicit permission
-* Other conduct which could reasonably be considered inappropriate in a professional setting
-
----
-
-### Enforcement Responsibilities
-
-Community leaders are responsible for clarifying and enforcing our standards of acceptable behavior and will take appropriate and fair corrective action in response to any behavior that they deem inappropriate, threatening, offensive, or harmful.
-
----
-
-### Scope
-
-This Code of Conduct applies within all community spaces, and also applies when an individual is officially representing the community in public spaces (such as using an official email address, posting via an official social media account, or acting as an appointed representative at an event).
-
----
-
-### Enforcement
-
-Instances of abusive, harassing, or otherwise unacceptable behavior may be reported to the community leaders responsible for enforcement at \[INSERT CONTACT METHOD].
-
-All complaints will be reviewed and investigated promptly and fairly.
-
-
+모든 불만사항은 신속하고 공정하게 검토 및 조사될 것입니다.
