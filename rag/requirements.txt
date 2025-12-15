@@ -1,0 +1,25 @@
+# FastAPI Framework
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+pydantic==2.10.3
+pydantic-settings==2.6.1
+
+# LangChain Python
+langchain==0.3.11
+langchain-community==0.3.11
+langchain-ollama==0.2.0
+
+# PDF Processing
+pymupdf==1.24.14
+langchain-text-splitters==0.3.2
+
+# Elasticsearch
+elasticsearch>=9.1.0,<10.0.0
+
+# HTTP Clients
+httpx==0.28.1
+
+# Utilities
+python-dotenv==1.0.1
+tiktoken==0.8.0
+python-multipart==0.0.12
