@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 /**
- * LangChain4j와 Ollama를 사용하여 텍스트 청크의 임베딩 벡터를 생성하는 서비스.
+ * Service for generating embedding vectors for text chunks using LangChain4j and Ollama.
  * 
  * Service for generating embedding vectors for text chunks using LangChain4j and Ollama.
  * 
@@ -44,11 +44,11 @@ public class EmbeddingService {
     }
 
     /**
-     * 구조화된 청크들의 임베딩 벡터를 생성합니다.
+     * Generates embedding vectors for structured chunks.
      * 
-     * @param documentId 문서 ID
-     * @param structuredChunks 임베딩을 생성할 청크 목록
-     * @return 임베딩이 포함된 청크 목록
+     * @param documentId Document ID
+     * @param structuredChunks List of chunks to generate embeddings for
+     * @return List of chunks with embeddings included
      */
     public List<StructuredChunk> generateEmbeddings(UUID documentId, List<StructuredChunk> structuredChunks) {
         long startTime = System.currentTimeMillis();
@@ -63,7 +63,7 @@ public class EmbeddingService {
         log.debug("📦 [EMBEDDING] Processing {} chunks in {} batches (batchSize={})", 
                 totalChunks, batchCount, batchSize);
 
-        // 배치 단위로 임베딩 생성
+        // Generate embeddings in batch units
         for (int i = 0; i < structuredChunks.size(); i += batchSize) {
             int endIndex = Math.min(i + batchSize, structuredChunks.size());
             List<StructuredChunk> batch = structuredChunks.subList(i, endIndex);
@@ -79,7 +79,7 @@ public class EmbeddingService {
             processedChunks += batch.size();
             long batchDuration = System.currentTimeMillis() - batchStartTime;
             
-            log.info("✅ [EMBEDDING] Batch {}/{} completed: processed={}/{}, duration={}ms", 
+            log.info("[EMBEDDING] Batch {}/{} completed: processed={}/{}, duration={}ms", 
                     currentBatch, batchCount, processedChunks, totalChunks, batchDuration);
         }
 
@@ -89,7 +89,7 @@ public class EmbeddingService {
         log.info("🎉 [EMBEDDING] Embedding generation completed successfully: documentId={}, chunks={}, duration={}ms", 
                 documentId, finalEmbeddedCount, duration);
         
-        // 임베딩 통계 로깅
+        // Log embedding statistics
         if (finalEmbeddedCount > 0) {
             long avgEmbeddingTime = duration / finalEmbeddedCount;
             log.debug("📊 [EMBEDDING] Statistics: avgTimePerChunk={}ms, batchSize={}, totalBatches={}", 
@@ -100,7 +100,7 @@ public class EmbeddingService {
     }
 
     /**
-     * LangChain4j를 사용하여 청크 배치의 임베딩을 생성합니다.
+     * Generates embeddings for a batch of chunks using LangChain4j.
      */
     private List<StructuredChunk> processBatchWithLangChain4j(List<StructuredChunk> batch) {
         long batchStartTime = System.currentTimeMillis();
@@ -109,7 +109,7 @@ public class EmbeddingService {
         List<StructuredChunk> result = new ArrayList<>();
 
         try {
-            // 배치 처리를 위한 TextSegment 목록 생성
+            // Create TextSegment list for batch processing
             List<TextSegment> textSegments = new ArrayList<>();
             for (StructuredChunk chunk : batch) {
                 String textForEmbedding = prepareTextForEmbedding(chunk);
@@ -117,30 +117,30 @@ public class EmbeddingService {
                 textSegments.add(segment);
             }
 
-            // LangChain4j를 사용한 배치 임베딩 생성
-            log.debug("🚀 [LANGCHAIN4J] Calling Ollama embedding model: segments={}", textSegments.size());
+            // Generate batch embeddings using LangChain4j
+            log.debug("[LANGCHAIN4J] Calling Ollama embedding model: segments={}", textSegments.size());
             long embeddingStartTime = System.currentTimeMillis();
             Response<List<Embedding>> response = embeddingModel.embedAll(textSegments);
             List<Embedding> embeddings = response.content();
             long embeddingDuration = System.currentTimeMillis() - embeddingStartTime;
             
-            log.info("✅ [LANGCHAIN4J] Ollama embedding completed: segments={}, duration={}ms, vectorDimension={}", 
+            log.info("[LANGCHAIN4J] Ollama embedding completed: segments={}, duration={}ms, vectorDimension={}", 
                     textSegments.size(), embeddingDuration, 
                     embeddings.size() > 0 ? embeddings.get(0).dimension() : 0);
 
-            // 결과 처리
+            // Process results
             for (int i = 0; i < batch.size(); i++) {
                 StructuredChunk chunk = batch.get(i);
                 Embedding embedding = embeddings.get(i);
                 
-                // float[] 벡터를 List<Double>로 변환
+                // Convert float[] vector to List<Double>
                 List<Double> embeddingVector = new ArrayList<>();
                 float[] vector = embedding.vector();
                 for (float value : vector) {
                     embeddingVector.add((double) value);
                 }
                 
-                // 임베딩이 포함된 새로운 청크 생성
+                // Create new chunk with embedding included
                 StructuredChunk embeddedChunk = StructuredChunk.builder()
                         .chunkId(chunk.getChunkId())
                         .documentId(chunk.getDocumentId())
@@ -155,17 +155,17 @@ public class EmbeddingService {
                 
                 result.add(embeddedChunk);
                 
-                log.debug("✅ [LANGCHAIN4J] Embedding processed for chunk: id={}, vectorSize={}, textLength={}", 
+                log.debug("[LANGCHAIN4J] Embedding processed for chunk: id={}, vectorSize={}, textLength={}", 
                         chunk.getChunkId(), embedding.dimension(), chunk.getContent().length());
             }
 
             long batchDuration = System.currentTimeMillis() - batchStartTime;
-            log.info("✅ [LANGCHAIN4J] Batch processing completed: processed={}, duration={}ms, avgPerChunk={}ms", 
+            log.info("[LANGCHAIN4J] Batch processing completed: processed={}, duration={}ms, avgPerChunk={}ms", 
                     result.size(), batchDuration, batchDuration / batch.size());
 
         } catch (Exception e) {
             long batchDuration = System.currentTimeMillis() - batchStartTime;
-            log.error("❌ [LANGCHAIN4J] Batch processing failed: chunks={}, duration={}ms, error={}", 
+            log.error("[LANGCHAIN4J] Batch processing failed: chunks={}, duration={}ms, error={}", 
                     batch.size(), batchDuration, e.getMessage(), e);
             throw new BusinessException(ErrorCode.EMBEDDING_GENERATION_FAILED, 
                     "Failed to generate embeddings: " + e.getMessage());
@@ -175,25 +175,25 @@ public class EmbeddingService {
     }
 
     /**
-     * 임베딩 생성을 위한 텍스트를 준비합니다.
-     * 제목과 내용을 결합하여 더 풍부한 컨텍스트를 제공합니다.
+     * Prepares text for embedding generation.
+     * Combines title and content to provide richer context.
      */
     private String prepareTextForEmbedding(StructuredChunk chunk) {
         StringBuilder text = new StringBuilder();
         
-        log.debug("📝 [EMBEDDING] Preparing text for embedding: chunkId={}", chunk.getChunkId());
+        log.debug("[EMBEDDING] Preparing text for embedding: chunkId={}", chunk.getChunkId());
 
-        // 제목이 있으면 추가
+        // Add title if exists
         if (chunk.getTitle() != null && !chunk.getTitle().trim().isEmpty()) {
             text.append("Title: ").append(chunk.getTitle()).append("\n");
         }
 
-        // 내용 추가
+        // Add content
         text.append(chunk.getContent());
 
         String finalText = text.toString().trim();
         
-        log.debug("✅ [EMBEDDING] Text prepared: chunkId={}, finalLength={}, hasTitle={}", 
+        log.debug("[EMBEDDING] Text prepared: chunkId={}, finalLength={}, hasTitle={}", 
                 chunk.getChunkId(), finalText.length(), chunk.getTitle() != null);
         
         return finalText;

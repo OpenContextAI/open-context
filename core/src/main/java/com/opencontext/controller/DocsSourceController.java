@@ -88,7 +88,7 @@ public interface DocsSourceController {
                                 "ingestionStatus": "PENDING",
                                 "message": "File uploaded successfully and is now pending for ingestion."
                             },
-                            "message": "요청이 성공적으로 처리되었습니다.",
+                            "message": "Request processed successfully.",
                             "errorCode": null,
                             "timestamp": "2025-08-07T11:50:00Z"
                         }
@@ -210,7 +210,7 @@ public interface DocsSourceController {
                                 "hasNext": true,
                                 "hasPrevious": false
                             },
-                            "message": "요청이 성공적으로 처리되었습니다.",
+                            "message": "Request processed successfully.",
                             "timestamp": "2025-08-07T12:05:00Z"
                         }
                         """
@@ -256,7 +256,7 @@ public interface DocsSourceController {
                         {
                             "success": true,
                             "data": "Document re-ingestion has been queued successfully.",
-                            "message": "요청이 성공적으로 처리되었습니다.",
+                            "message": "Request processed successfully.",
                             "timestamp": "2025-08-07T12:05:00Z"
                         }
                         """
@@ -304,7 +304,7 @@ public interface DocsSourceController {
                         {
                             "success": true,
                             "data": "Document deletion has been queued successfully.",
-                            "message": "요청이 성공적으로 처리되었습니다.",
+                            "message": "Request processed successfully.",
                             "timestamp": "2025-08-07T12:05:00Z"
                         }
                         """
