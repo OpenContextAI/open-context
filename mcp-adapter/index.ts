@@ -88,6 +88,7 @@ function createServerInstance(clientIp?: string) {
   );
 
   // OpenContext MCP: find_knowledge tool
+  // @ts-ignore - Type instantiation depth issue with MCP SDK
   server.registerTool(
     "find_knowledge", 
     {
