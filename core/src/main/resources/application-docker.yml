@@ -1,7 +1,7 @@
 spring:
   application:
     name: open-context-core
-  
+
   # Database Configuration (Docker)
   datasource:
     url: jdbc:postgresql://postgres:5432/opencontext
@@ -15,18 +15,16 @@ spring:
   # JPA Configuration
   jpa:
     hibernate:
-      ddl-auto: validate
-    show-sql: true
+      ddl-auto: update
+    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
 
-  # Flyway Configuration (Docker)
+  # Flyway Configuration
   flyway:
     baseline-on-migrate: true
-    locations: classpath:db/migration
-    validate-on-migrate: true
 
   # Servlet Configuration
   servlet:
@@ -34,39 +32,34 @@ spring:
       max-file-size: 100MB
       max-request-size: 100MB
 
-# Application-specific Configuration (Docker)
+# Application-specific Configuration
 app:
-  # Elasticsearch Configuration (Docker)
+  # RAG Service Configuration
+  rag:
+    service:
+      url: http://open-context-rag:8001
+
+  # Elasticsearch Configuration
   elasticsearch:
     url: http://elasticsearch:9200
     index: document_chunks_index
-  
-  # Ollama Configuration (Docker)
+
+  # Ollama Configuration
   ollama:
     api:
       url: http://ollama:11434
     embedding:
-      model: dengcao/Qwen3-Embedding-0.6B:F16
-  
+      model: bge-m3:latest
+
   # Embedding Configuration
   embedding:
-    batch-size: 2  # 더 작은 배치로 안정성 우선
-  
+    batch-size: 10
+
   # Search Configuration
   search:
     snippet-max-length: 50
     bm25-weight: 0.3
     vector-weight: 0.7
-  
-  # Content Configuration
-  content:
-    default-max-tokens: 25000
-    tokenizer: tiktoken-cl100k_base
-  
-  # Unstructured API Configuration
-  unstructured:
-    api:
-      url: http://unstructured-api:8000
 
 # MinIO Configuration (Docker)
 minio:
@@ -74,8 +67,6 @@ minio:
   access-key: minioadmin
   secret-key: minioadmin123!
   bucket-name: opencontext-documents
-
-
 
 # Application Configuration
 opencontext:
@@ -95,13 +86,13 @@ management:
     health:
       show-details: when-authorized
   health:
-      elasticsearch:
-        enabled: false
+    elasticsearch:
+      enabled: false
 
 # Logging Configuration
 logging:
   level:
-    com.opencontext: DEBUG
+    com.opencontext: INFO
     org.springframework.data.elasticsearch: INFO
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

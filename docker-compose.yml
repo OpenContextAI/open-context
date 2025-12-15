@@ -58,7 +58,7 @@ services:
     environment:
       - OLLAMA_HOST=0.0.0.0
     entrypoint: /bin/sh
-    command: -c "ollama serve & sleep 10 && ollama pull dengcao/Qwen3-Embedding-0.6B:F16 && echo 'Model download completed' && pkill ollama"
+    command: -c "ollama serve & sleep 10 && ollama pull bge-m3:latest && echo 'Model download completed' && pkill ollama"
 
   # Ollama Server for embeddings
   ollama:
@@ -116,15 +116,28 @@ services:
       - opencontext-network
     restart: unless-stopped
 
-  # Unstructured.io API for document parsing
-  unstructured-api:
-    image: quay.io/unstructured-io/unstructured-api:latest
-    platform: linux/amd64
-    container_name: unstructured-api
+  # FastAPI RAG Service
+  open-context-rag:
+    build:
+      context: ./rag
+      dockerfile: Dockerfile
+    image: opencontext/rag:0.1.0
+    container_name: open-context-rag
     ports:
-      - "8000:8000"
+      - "8002:8001"
     environment:
-    - UNSTRUCTURED_MEMORY_FREE_MINIMUM_MB=512
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - ELASTICSEARCH_INDEX=document_chunks_index
+      - OLLAMA_URL=http://ollama:11434
+      - OLLAMA_MODEL=bge-m3:latest
+      - EMBEDDING_BATCH_SIZE=2
+      - BM25_WEIGHT=0.3
+      - VECTOR_WEIGHT=0.7
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+      ollama:
+        condition: service_started
     networks:
       - opencontext-network
     restart: unless-stopped
@@ -140,6 +153,7 @@ services:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=docker
+      - APP_RAG_SERVICE_URL=http://open-context-rag:8001
     depends_on:
       postgres:
         condition: service_healthy
@@ -147,9 +161,9 @@ services:
         condition: service_healthy
       ollama:
         condition: service_started
-      unstructured-api:
-        condition: service_started
       minio:
+        condition: service_started
+      open-context-rag:
         condition: service_started
     networks:
       - opencontext-network

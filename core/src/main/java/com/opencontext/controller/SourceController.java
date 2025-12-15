@@ -242,8 +242,12 @@ public class SourceController implements DocsSourceController{
         }
     }
 
+    @Value("${app.rag.service.url:http://open-context-rag:8001}")
+    private String ragServiceUrl;
+
     /**
-     * Executes the document ingestion pipeline asynchronously.
+     * 문서 수집 파이프라인을 비동기적으로 실행합니다.
+     * RAG 서비스 (FastAPI)를 호출하여 처리합니다.
      */
     @Async
     @Transactional
@@ -253,41 +257,58 @@ public class SourceController implements DocsSourceController{
         try {
             // 1. Update status to PARSING
             fileStorageService.updateDocumentStatus(documentId, IngestionStatus.PARSING);
-            
-            // 2. Parse document using Unstructured API
-            var parsedElements = documentParsingService.parseDocument(documentId);
-            log.info("Document parsing completed: id={}, elements={}", documentId, parsedElements.size());
 
-            // 3. Update status to CHUNKING
-            fileStorageService.updateDocumentStatus(documentId, IngestionStatus.CHUNKING);
-            
-            // 4. Split into chunks
-            var structuredChunks = chunkingService.createChunks(documentId, parsedElements);
-            log.info("Document chunking completed: id={}, chunks={}", documentId, structuredChunks.size());
+            // 2. Get document info
+            SourceDocument document = sourceDocumentRepository.findById(documentId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.SOURCE_DOCUMENT_NOT_FOUND,
+                            "Document not found: " + documentId));
 
-            // 5. Update status to EMBEDDING
-            fileStorageService.updateDocumentStatus(documentId, IngestionStatus.EMBEDDING);
-            
-            // 6. Generate embeddings
-            var embeddedChunks = embeddingService.generateEmbeddings(documentId, structuredChunks);
-            log.info("Embedding generation completed: id={}, embedded_chunks={}", documentId, embeddedChunks.size());
+            // 3. Generate presigned MinIO URL (valid for 1 hour)
+            String presignedUrl = fileStorageService.generatePresignedUrl(document.getFileStoragePath());
+            log.debug("Generated presigned URL for document: id={}, filename={}", documentId, document.getOriginalFilename());
 
-            // 7. Update status to INDEXING
-            fileStorageService.updateDocumentStatus(documentId, IngestionStatus.INDEXING);
-            
-            // 8. Store in Elasticsearch and PostgreSQL
-            indexingService.indexChunks(documentId, embeddedChunks);
-            log.info("Document indexing completed: id={}", documentId);
+            // 4. Call RAG service
+            com.opencontext.dto.ProcessDocumentRequest request = com.opencontext.dto.ProcessDocumentRequest.builder()
+                    .documentId(documentId.toString())
+                    .fileUrl(presignedUrl)
+                    .filename(document.getOriginalFilename())
+                    .fileType(document.getFileType())
+                    .build();
 
-            // 9. Update status to COMPLETED
-            fileStorageService.updateDocumentStatusToCompleted(documentId);
-            
+            String ragProcessUrl = ragServiceUrl + "/api/v1/process";
+            log.info("Calling RAG service: url={}, documentId={}", ragProcessUrl, documentId);
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<com.opencontext.dto.ProcessDocumentRequest> requestEntity = new HttpEntity<>(request, headers);
+
+            ResponseEntity<com.opencontext.dto.ProcessDocumentResponse> response = restTemplate.postForEntity(
+                    ragProcessUrl,
+                    requestEntity,
+                    com.opencontext.dto.ProcessDocumentResponse.class
+            );
+
+            // 5. Check response
+            if (response.getBody() != null && response.getBody().isSuccess()) {
+                com.opencontext.dto.ProcessDocumentResponse ragResponse = response.getBody();
+
+                // Update status to COMPLETED
+                fileStorageService.updateDocumentStatusToCompleted(documentId);
+
+                log.info("RAG processing completed: documentId={}, chunks={}, status={}",
+                        documentId, ragResponse.getChunksProcessed(), ragResponse.getStatus());
+            } else {
+                String errorMessage = response.getBody() != null ? response.getBody().getErrorMessage() : "Unknown error";
+                throw new BusinessException(ErrorCode.INGESTION_PIPELINE_FAILED,
+                        "RAG service processing failed: " + errorMessage);
+            }
+
             log.info("Ingestion pipeline completed successfully: documentId={}", documentId);
 
         } catch (Exception e) {
             log.error("Ingestion pipeline failed: documentId={}", documentId, e);
             fileStorageService.updateDocumentStatusToError(documentId, e.getMessage());
-            throw new BusinessException(ErrorCode.INGESTION_PIPELINE_FAILED, 
+            throw new BusinessException(ErrorCode.INGESTION_PIPELINE_FAILED,
                     "Ingestion pipeline failed: " + e.getMessage());
         }
     }
