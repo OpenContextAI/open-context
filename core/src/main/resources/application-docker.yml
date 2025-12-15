@@ -1,15 +1,12 @@
 spring:
   application:
     name: open-context-core
-  
-  profiles:
-    active: dev
-  
-  # Database Configuration (Development)
+
+  # Database Configuration (Docker)
   datasource:
-    url: jdbc:postgresql://localhost:5432/opencontext
-    username: postgres
-    password: 3482
+    url: jdbc:postgresql://postgres:5432/opencontext
+    username: user
+    password: password
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
@@ -19,7 +16,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
@@ -40,17 +37,17 @@ app:
   # RAG Service Configuration
   rag:
     service:
-      url: http://localhost:8001
+      url: http://open-context-rag:8001
 
   # Elasticsearch Configuration
   elasticsearch:
-    url: http://localhost:9200
+    url: http://elasticsearch:9200
     index: document_chunks_index
 
   # Ollama Configuration
   ollama:
     api:
-      url: http://localhost:11434
+      url: http://ollama:11434
     embedding:
       model: bge-m3:latest
 
@@ -64,16 +61,12 @@ app:
     bm25-weight: 0.3
     vector-weight: 0.7
 
-# MinIO Configuration (Development)
+# MinIO Configuration (Docker)
 minio:
-  endpoint: http://localhost:9000
+  endpoint: http://minio:9000
   access-key: minioadmin
-  secret-key: minioadmin
+  secret-key: minioadmin123!
   bucket-name: opencontext-documents
-
-# Unstructured.io Configuration (Development)
-unstructured:
-  base-url: http://localhost:8000
 
 # Application Configuration
 opencontext:
@@ -94,12 +87,12 @@ management:
       show-details: when-authorized
   health:
     elasticsearch:
-      enabled: false  # RAG 서비스로 마이그레이션했으므로 비활성화
+      enabled: false
 
 # Logging Configuration
 logging:
   level:
-    com.opencontext: DEBUG
+    com.opencontext: INFO
     org.springframework.data.elasticsearch: INFO
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

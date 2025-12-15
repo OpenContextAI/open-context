@@ -30,6 +30,15 @@ memory-bank/
 # IDE
 .vscode/
 .idea/
+.cursor/
+
+# Gradle
+.gradle-user-home/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
 
 # Temporary files
 *.tmp
