@@ -1,5 +1,5 @@
 # Multi-stage build for Spring Boot application
-FROM openjdk:21-jdk-slim as builder
+FROM eclipse-temurin:21-jdk-jammy AS builder
 
 # Install curl, wget and unzip
 RUN apt-get update && apt-get install -y curl wget unzip && \
@@ -23,7 +23,7 @@ COPY src/ src/
 RUN gradle clean build -x test
 
 # Runtime stage
-FROM openjdk:21-slim
+FROM eclipse-temurin:21-jre-jammy
 
 # Install curl for health checks
 RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
