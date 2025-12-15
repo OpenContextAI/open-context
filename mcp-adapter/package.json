@@ -8,7 +8,6 @@
     "build": "tsc",
     "start": "tsx index.ts",
     "dev": "tsx index.ts",
-    "mock": "node dist/mock-server.js",
     "clean": "rm -rf dist"
   },
   "keywords": [
