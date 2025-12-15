@@ -678,4 +678,34 @@
                     .updatedAt(document.getUpdatedAt())
                     .build();
         }
+
+        /**
+         * Generates a presigned GET URL for downloading a file from MinIO.
+         * The URL is valid for 1 hour.
+         *
+         * @param objectKey the MinIO object key
+         * @return presigned GET URL
+         */
+        public String generatePresignedUrl(String objectKey) {
+            try {
+                GetPresignedObjectUrlArgs args = GetPresignedObjectUrlArgs.builder()
+                        .method(io.minio.http.Method.GET)
+                        .bucket(minioConfig.getBucketName())
+                        .object(objectKey)
+                        .expiry(3600) // 1 hour in seconds
+                        .build();
+
+                String presignedUrl = minioClient.getPresignedObjectUrl(args);
+
+                log.debug("Generated presigned URL: objectKey={}, expirySeconds=3600", objectKey);
+
+                return presignedUrl;
+
+            } catch (Exception e) {
+                log.error("Failed to generate presigned URL: objectKey={}, error={}",
+                        objectKey, e.getMessage(), e);
+                throw new BusinessException(ErrorCode.STORAGE_ERROR,
+                        "Failed to generate presigned URL: " + e.getMessage());
+            }
+        }
     }

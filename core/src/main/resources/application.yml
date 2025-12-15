@@ -8,8 +8,8 @@ spring:
   # Database Configuration (Development)
   datasource:
     url: jdbc:postgresql://localhost:5432/opencontext
-    username: user
-    password: password
+    username: postgres
+    password: 3482
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
@@ -37,22 +37,27 @@ spring:
 
 # Application-specific Configuration
 app:
+  # RAG Service Configuration
+  rag:
+    service:
+      url: http://localhost:8001
+
   # Elasticsearch Configuration
   elasticsearch:
     url: http://localhost:9200
     index: document_chunks_index
-  
-  # Ollama Configuration  
+
+  # Ollama Configuration
   ollama:
     api:
       url: http://localhost:11434
     embedding:
-      model: dengcao/Qwen3-Embedding-0.6B:F16
-  
+      model: bge-m3:latest
+
   # Embedding Configuration
   embedding:
     batch-size: 10
-  
+
   # Search Configuration
   search:
     snippet-max-length: 50
@@ -63,7 +68,7 @@ app:
 minio:
   endpoint: http://localhost:9000
   access-key: minioadmin
-  secret-key: minioadmin123!
+  secret-key: minioadmin
   bucket-name: opencontext-documents
 
 # Unstructured.io Configuration (Development)
@@ -87,6 +92,9 @@ management:
   endpoint:
     health:
       show-details: when-authorized
+  health:
+    elasticsearch:
+      enabled: false  # RAG 서비스로 마이그레이션했으므로 비활성화
 
 # Logging Configuration
 logging:
