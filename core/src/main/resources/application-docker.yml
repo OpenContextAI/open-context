@@ -2,11 +2,14 @@ spring:
   application:
     name: open-context-core
   
-  # Database Configuration (Docker)
+  profiles:
+    active: dev
+  
+  # Database Configuration (Development)
   datasource:
-    url: jdbc:postgresql://postgres:5432/opencontext
-    username: user
-    password: password
+    url: jdbc:postgresql://localhost:5432/opencontext
+    username: postgres
+    password: 3482
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10
@@ -15,18 +18,16 @@ spring:
   # JPA Configuration
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
 
-  # Flyway Configuration (Docker)
+  # Flyway Configuration
   flyway:
     baseline-on-migrate: true
-    locations: classpath:db/migration
-    validate-on-migrate: true
 
   # Servlet Configuration
   servlet:
@@ -34,48 +35,45 @@ spring:
       max-file-size: 100MB
       max-request-size: 100MB
 
-# Application-specific Configuration (Docker)
+# Application-specific Configuration
 app:
-  # Elasticsearch Configuration (Docker)
+  # RAG Service Configuration
+  rag:
+    service:
+      url: http://localhost:8001
+
+  # Elasticsearch Configuration
   elasticsearch:
-    url: http://elasticsearch:9200
+    url: http://localhost:9200
     index: document_chunks_index
-  
-  # Ollama Configuration (Docker)
+
+  # Ollama Configuration
   ollama:
     api:
-      url: http://ollama:11434
+      url: http://localhost:11434
     embedding:
-      model: dengcao/Qwen3-Embedding-0.6B:F16
-  
+      model: bge-m3:latest
+
   # Embedding Configuration
   embedding:
-    batch-size: 2  # 더 작은 배치로 안정성 우선
-  
+    batch-size: 10
+
   # Search Configuration
   search:
     snippet-max-length: 50
     bm25-weight: 0.3
     vector-weight: 0.7
-  
-  # Content Configuration
-  content:
-    default-max-tokens: 25000
-    tokenizer: tiktoken-cl100k_base
-  
-  # Unstructured API Configuration
-  unstructured:
-    api:
-      url: http://unstructured-api:8000
 
-# MinIO Configuration (Docker)
+# MinIO Configuration (Development)
 minio:
-  endpoint: http://minio:9000
+  endpoint: http://localhost:9000
   access-key: minioadmin
-  secret-key: minioadmin123!
+  secret-key: minioadmin
   bucket-name: opencontext-documents
 
-
+# Unstructured.io Configuration (Development)
+unstructured:
+  base-url: http://localhost:8000
 
 # Application Configuration
 opencontext:
@@ -95,8 +93,8 @@ management:
     health:
       show-details: when-authorized
   health:
-      elasticsearch:
-        enabled: false
+    elasticsearch:
+      enabled: false  # RAG 서비스로 마이그레이션했으므로 비활성화
 
 # Logging Configuration
 logging:

@@ -148,11 +148,15 @@ public class SearchService {
      */
     private Map<String, Object> buildHybridSearchQuery(String query, List<Float> queryEmbedding, int topK) {
         
-        // BM25 keyword search query 
+        // BM25 키워드 검색 쿼리
         Map<String, Object> bm25Query = Map.of(
             "multi_match", Map.of(
                 "query", query,
-                "fields", Arrays.asList("content^2", "metadata.title^1.5"),
+                "fields", Arrays.asList(
+                    "metadata.originalFilename^3.0",  // 파일명 (3배 가중치 - 가장 높음)
+                    "content^2.0",                     // 본문 내용 (2배 가중치)
+                    "metadata.title^1.5"               // 청크 제목 (1.5배 가중치)
+                ),
                 "type", "best_fields",
                 "fuzziness", "AUTO",
                 "boost", bm25Weight

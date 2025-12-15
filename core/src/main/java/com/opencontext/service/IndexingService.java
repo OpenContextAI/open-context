@@ -249,17 +249,21 @@ public class IndexingService {
         metadata.put("sequenceInDocument", 0); // default value
         metadata.put("language", "ko"); // Korean default value
 
-        // Reflect actual file type by querying from SourceDocument 
+        // 실제 파일 타입과 원본 파일명을 SourceDocument에서 조회하여 반영
         String resolvedFileType = "UNKNOWN";
+        String originalFilename = "";
         try {
             UUID srcId = UUID.fromString(chunk.getDocumentId());
-            resolvedFileType = sourceDocumentRepository.findById(srcId)
-                    .map(SourceDocument::getFileType)
-                    .orElse("UNKNOWN");
+            SourceDocument sourceDoc = sourceDocumentRepository.findById(srcId).orElse(null);
+            if (sourceDoc != null) {
+                resolvedFileType = sourceDoc.getFileType();
+                originalFilename = sourceDoc.getOriginalFilename();
+            }
         } catch (Exception e) {
-            log.warn("Failed to resolve fileType for documentId={}, defaulting to UNKNOWN", chunk.getDocumentId());
+            log.warn("Failed to resolve fileType and originalFilename for documentId={}, using defaults", chunk.getDocumentId());
         }
         metadata.put("fileType", resolvedFileType);
+        metadata.put("originalFilename", originalFilename);
         
         // Handle breadcrumbs (default: empty array)
         metadata.put("breadcrumbs", Arrays.asList()); // empty array default value
