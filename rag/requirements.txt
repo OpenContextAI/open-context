@@ -14,7 +14,7 @@ pymupdf==1.24.14
 langchain-text-splitters==0.3.2
 
 # Elasticsearch
-elasticsearch>=9.1.0,<10.0.0
+elasticsearch>=8.11.0,<9.0.0
 
 # HTTP Clients
 httpx==0.28.1

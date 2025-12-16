@@ -169,22 +169,6 @@ services:
       - opencontext-network
     restart: unless-stopped
 
-  # Mock Server for testing
-  open-context-mock-server:
-    build:
-      context: ./mcp-adapter
-      dockerfile: Dockerfile
-    image: opencontext/mcp-adapter:0.1.0
-    container_name: open-context-mock-server
-    ports:
-      - "8001:8001" 
-    command: ["npm", "run", "mock"]
-    environment:
-      - MOCK_SERVER_PORT=8001  
-    networks:
-      - opencontext-network
-    restart: unless-stopped
-
   # Node.js MCP Adapter
   open-context-mcp-adapter:
     build:

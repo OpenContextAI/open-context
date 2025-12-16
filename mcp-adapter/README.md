@@ -87,7 +87,6 @@ mcp-adapter/
 ├── lib/
 │   ├── api.ts              # OpenContext Core API client
 │   └── types.ts            # TypeScript type definitions
-├── mock-server.ts          # Development mock server
 ├── dist/                   # Built JavaScript files
 ├── package.json            # Project dependencies and scripts
 ├── tsconfig.json          # TypeScript configuration
